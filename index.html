@@ -1759,6 +1759,45 @@
       if(navContacts) navContacts.style.display = ocultar ? 'none' : '';
     }
 
+    let _tipoResolvido = false; // true somente quando o tipo já chegou do Firestore nesta sessão
+    function marcarTipoResolvido() {
+      _tipoResolvido = true;
+      console.log('[DIAG] marcarTipoResolvido() chamado. _tipoCache atual =', JSON.stringify(getTipoUsuario()));
+    }
+    function aplicarVisibilidadeBotaoCarregarAgora() {
+      const btn = document.getElementById('rec-carregar-btn');
+      const ehCliente = (getTipoUsuario() === 'cliente');
+      console.log('[DIAG] aplicarVisibilidadeBotaoCarregarAgora(): btn existe?', !!btn, '| getTipoUsuario() =', JSON.stringify(getTipoUsuario()), '| ehCliente =', ehCliente);
+      if(btn) btn.style.display = ehCliente ? 'none' : '';
+    }
+    // Chamar sempre que renderTela1() desenhar o botão. Se o tipo já é conhecido, decide na hora.
+    // Caso contrário, mantém oculto e espera o Firestore confirmar (ou o teto de segurança de 2.5s).
+    function aguardarTipoEDecidirBotao() {
+      console.log('[DIAG] aguardarTipoEDecidirBotao() chamado. _tipoResolvido =', _tipoResolvido, '| getTipoUsuario() =', JSON.stringify(getTipoUsuario()));
+      if(window.__recBootResolverTipo) {
+        window.__recBootResolverTipo = null; // invalida espera anterior (botão/overlay foram recriados)
+      }
+      if(_tipoResolvido) {
+        aplicarVisibilidadeBotaoCarregarAgora();
+        return;
+      }
+      const tetoSeguranca = setTimeout(() => {
+        console.log('[DIAG] TETO DE SEGURANÇA (8s) disparou sem resolução prévia.');
+        if(window.__recBootResolverTipo === resolver) window.__recBootResolverTipo = null;
+        aplicarVisibilidadeBotaoCarregarAgora();
+        const overlay = document.getElementById('recBootOverlay');
+        if(overlay) { overlay.style.transition = 'opacity .25s'; overlay.style.opacity = '0'; setTimeout(() => overlay.remove(), 250); }
+      }, 8000); // generoso: cobre o boot do Auth + leitura do Firestore mesmo em rede lenta
+      function resolver() {
+        console.log('[DIAG] resolver() chamado via Firestore/cadastro (antes do teto).');
+        clearTimeout(tetoSeguranca);
+        aplicarVisibilidadeBotaoCarregarAgora();
+        const overlay = document.getElementById('recBootOverlay');
+        if(overlay) { overlay.style.transition = 'opacity .25s'; overlay.style.opacity = '0'; setTimeout(() => overlay.remove(), 250); }
+      }
+      window.__recBootResolverTipo = resolver;
+    }
+
     function setActiveFooter(activeId) {
       detachPedidosListener();
       aplicarVisibilidadeFooterPorTipo();
@@ -1837,7 +1876,7 @@
             <div id="recQuickWrap" style="position:relative;">
               ${getRecBootOverlayHtml()}
               ${getTipoUsuario() !== 'cliente' ? `
-              <button class="fis-submit-btn" type="button" onclick="mostrarFormRecarga()">
+              <button class="fis-submit-btn" type="button" id="rec-carregar-btn" style="display:none;" onclick="mostrarFormRecarga()">
                 <svg viewBox="0 0 24 24" width="20" height="20"><path fill="white" d="M13 2.05V4.07C16.94 4.56 20 7.92 20 12C20 14.95 18.41 17.53 16 19.05V21.05C19.97 19.42 22 15.96 22 12C22 6.82 18.11 2.55 13 2.05M11 2.06C8.04 2.36 5.39 3.81 3.55 6H5.88C7.26 4.72 9.04 3.85 11 3.63V2.06M2.06 13H4.12C4.34 14.93 5.13 16.7 6.34 18.13L4.84 19.63C3.29 17.87 2.3 15.54 2.06 13M11 20.37V22.37C9 22.12 7.22 21.21 5.88 19.88L7.38 18.38C8.44 19.36 9.72 20.06 11 20.37M12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17Z"/></svg>
                 Carregar
               </button>
@@ -1944,14 +1983,8 @@
       })();
 
       const recBootOverlay = document.getElementById('recBootOverlay');
-      if(recBootOverlay) {
-        appBootShown = true;
-        setTimeout(function() {
-          recBootOverlay.style.transition = 'opacity .25s';
-          recBootOverlay.style.opacity = '0';
-          setTimeout(() => recBootOverlay.remove(), 250);
-        }, 2000);
-      }
+      if(recBootOverlay) appBootShown = true;
+      aguardarTipoEDecidirBotao();
     }
 
     function selectValorRapido(val, btnEl) {
@@ -2459,14 +2492,36 @@
       const db = window.__movicelDb;
       const fs = window.__movicelFirestore;
       const user = window.__currentUser;
-      if(!db || !fs || !user) return;
+      console.log('[DIAG] attachProfileSync() chamado. db?', !!db, '| fs?', !!fs, '| user?', !!user, '| uid =', user && user.uid);
+      if(!db || !fs || !user) { console.log('[DIAG] attachProfileSync() saiu mais cedo (faltou db/fs/user).'); return; }
       try {
         unsubscribeProfileSync = fs.onSnapshot(fs.doc(db, 'perfisUtilizador', user.uid), (snap) => {
-          if(!snap.exists()) return;
+          console.log('[DIAG] onSnapshot perfil disparou. snap.exists() =', snap.exists(), '| data =', snap.exists() ? JSON.stringify(snap.data()) : null);
+          if(!snap.exists()) {
+            // Sem documento de perfil ainda: não há tipo a aplicar, mas não deixar o botão pendente do teto de segurança.
+            marcarTipoResolvido();
+            if(typeof window.__recBootResolverTipo === 'function') {
+              window.__recBootResolverTipo();
+              window.__recBootResolverTipo = null;
+            } else {
+              aplicarVisibilidadeBotaoCarregarAgora();
+            }
+            return;
+          }
           const data = snap.data();
           let changed = false;
           if(data.provincia && data.provincia !== getProvinciaUsuario()) { _provinciaCache = data.provincia; changed = true; }
           if(data.tipo && data.tipo !== getTipoUsuario()) { _tipoCache = data.tipo; changed = true; }
+          if(data.tipo) {
+            // Tipo confirmado pelo servidor: marca como resolvido e libera qualquer espera em curso (overlay/teto de segurança).
+            marcarTipoResolvido();
+            if(typeof window.__recBootResolverTipo === 'function') {
+              window.__recBootResolverTipo();
+              window.__recBootResolverTipo = null;
+            } else {
+              aplicarVisibilidadeBotaoCarregarAgora();
+            }
+          }
           if(changed) {
             if(typeof aplicarVisibilidadeFooterPorTipo === 'function') aplicarVisibilidadeFooterPorTipo();
             if(document.getElementById('subheader') && document.getElementById('subheader').innerText === 'Configurações') {
@@ -3883,6 +3938,7 @@ function toggleAddContactForm() {
       );
       if (typeof window.setProvinciaUsuario === 'function') window.setProvinciaUsuario(provincia);
       if (typeof window.setTipoUsuario === 'function') window.setTipoUsuario(tipo);
+      if (typeof window.marcarTipoResolvido === 'function') window.marcarTipoResolvido();
       if (typeof window.salvarPerfilNoFirestore === 'function') window.salvarPerfilNoFirestore({ provincia, tipo });
       nameScreen.style.display = 'none';
       appRoot.style.display = '';
@@ -3930,6 +3986,8 @@ function toggleAddContactForm() {
       _contactsCache = [];
       _provinciaCache = '';
       _tipoCache = '';
+      _tipoResolvido = false;
+      appBootShown = false;
     }
   });
 </script>
