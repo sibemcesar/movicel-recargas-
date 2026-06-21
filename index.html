@@ -1172,13 +1172,13 @@
     letter-spacing:0.4px;
   }
   .auth-pass-wrap { position:relative; margin-bottom:8px; }
-  #authPassInput, .auth-text-input {
+  #authPassInput, #authConfirmInput, .auth-text-input {
     width:100%; box-sizing:border-box; border:1.6px solid #f0c4cb; border-radius:12px;
     background:#fff8f8; padding:13px 14px; font-size:1em; color:#333;
     outline:none; font-weight:600;
   }
-  #authPassInput { padding-right:42px; }
-  #authPassInput:focus, .auth-text-input:focus { border-color:#c20021; }
+  #authPassInput, #authConfirmInput { padding-right:42px; }
+  #authPassInput:focus, #authConfirmInput:focus, .auth-text-input:focus { border-color:#c20021; }
   .auth-pass-toggle {
     position:absolute; right:10px; top:50%; transform:translateY(-50%);
     background:none; border:none; color:#c20021; cursor:pointer; padding:6px;
@@ -1204,8 +1204,8 @@
     animation:authspin 0.7s linear infinite; display:none;
   }
   .auth-submit-btn.loading .auth-spinner { display:inline-block; }
-  .auth-submit-btn.loading .auth-btn-label { display:none; }
   @keyframes authspin { to { transform:rotate(360deg); } }
+  .auth-btn-label { transition:opacity .15s; }
   .auth-switch {
     text-align:center; margin-top:18px; font-size:0.86em; color:#888;
   }
@@ -1288,6 +1288,9 @@
   <img class="auth-hero-img" src="https://payload.cargocollective.com/1/4/142184/1911801/logo3.png" alt="Recargas Movicel">
   <div class="auth-box">
 
+    <h2 class="auth-title" id="authTitle">Entrar</h2>
+    <p class="auth-sub" id="authSubTitle">Aceda à sua conta para continuar</p>
+
     <span class="auth-field-label">Número de telefone</span>
     <div class="auth-email-wrap">
       <span class="auth-email-prefix">+244</span>
@@ -1303,12 +1306,26 @@
       </button>
     </div>
 
+    <div id="authConfirmWrap" style="display:none;">
+      <span class="auth-field-label">Confirmar senha</span>
+      <div class="auth-pass-wrap">
+        <input id="authConfirmInput" type="password" placeholder="Repita a senha" autocomplete="off">
+        <button type="button" class="auth-pass-toggle" id="authConfirmToggle" aria-label="Mostrar senha">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+    </div>
+
     <p class="auth-msg" id="authMsg"></p>
 
     <button class="auth-submit-btn" id="authSubmitBtn">
       <span class="auth-spinner"></span>
       <span class="auth-btn-label" id="authBtnLabel">Entrar</span>
     </button>
+
+    <p class="auth-switch" id="authSwitchWrap">
+      Ainda não tem conta? <button type="button" id="authSwitchBtn">Criar conta</button>
+    </p>
   </div>
 </div>
 
@@ -1759,37 +1776,30 @@
       if(navContacts) navContacts.style.display = ocultar ? 'none' : '';
     }
 
-    let _tipoResolvido = false; // true somente quando o tipo já chegou do Firestore nesta sessão
+    let _tipoResolvido = false;
     function marcarTipoResolvido() {
       _tipoResolvido = true;
-      console.log('[DIAG] marcarTipoResolvido() chamado. _tipoCache atual =', JSON.stringify(getTipoUsuario()));
     }
     function aplicarVisibilidadeBotaoCarregarAgora() {
       const btn = document.getElementById('rec-carregar-btn');
       const ehCliente = (getTipoUsuario() === 'cliente');
-      console.log('[DIAG] aplicarVisibilidadeBotaoCarregarAgora(): btn existe?', !!btn, '| getTipoUsuario() =', JSON.stringify(getTipoUsuario()), '| ehCliente =', ehCliente);
       if(btn) btn.style.display = ehCliente ? 'none' : '';
     }
-    // Chamar sempre que renderTela1() desenhar o botão. Se o tipo já é conhecido, decide na hora.
-    // Caso contrário, mantém oculto e espera o Firestore confirmar (ou o teto de segurança de 2.5s).
     function aguardarTipoEDecidirBotao() {
-      console.log('[DIAG] aguardarTipoEDecidirBotao() chamado. _tipoResolvido =', _tipoResolvido, '| getTipoUsuario() =', JSON.stringify(getTipoUsuario()));
       if(window.__recBootResolverTipo) {
-        window.__recBootResolverTipo = null; // invalida espera anterior (botão/overlay foram recriados)
+        window.__recBootResolverTipo = null;
       }
       if(_tipoResolvido) {
         aplicarVisibilidadeBotaoCarregarAgora();
         return;
       }
       const tetoSeguranca = setTimeout(() => {
-        console.log('[DIAG] TETO DE SEGURANÇA (8s) disparou sem resolução prévia.');
         if(window.__recBootResolverTipo === resolver) window.__recBootResolverTipo = null;
         aplicarVisibilidadeBotaoCarregarAgora();
         const overlay = document.getElementById('recBootOverlay');
         if(overlay) { overlay.style.transition = 'opacity .25s'; overlay.style.opacity = '0'; setTimeout(() => overlay.remove(), 250); }
-      }, 8000); // generoso: cobre o boot do Auth + leitura do Firestore mesmo em rede lenta
+      }, 8000);
       function resolver() {
-        console.log('[DIAG] resolver() chamado via Firestore/cadastro (antes do teto).');
         clearTimeout(tetoSeguranca);
         aplicarVisibilidadeBotaoCarregarAgora();
         const overlay = document.getElementById('recBootOverlay');
@@ -2420,6 +2430,7 @@
     const ICON_BELL = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12,22C13.1,22 14,21.1 14,20H10C10,21.1 10.89,22 12,22M18,16V11C18,7.93 16.36,5.36 13.5,4.68V4C13.5,3.17 12.83,2.5 12,2.5C11.17,2.5 10.5,3.17 10.5,4V4.68C7.63,5.36 6,7.92 6,11V16L4,18V19H20V18L18,16Z"/></svg>';
     const ICON_DOC = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M8,12V14H16V12H8M8,16V18H13V16H8Z"/></svg>';
     const ICON_FACEBOOK = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M22,12A10,10 0 0,0 12,2A10,10 0 0,0 2,12C2,16.84 5.44,20.87 10,21.8V15H8V12H10V9.5C10,7.57 11.57,6 13.5,6H16V9H14C13.45,9 13,9.45 13,10V12H16V15H13V21.95C18.05,21.45 22,17.19 22,12Z"/></svg>';
+    const ICON_WHATSAPP = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.84.5 3.56 1.36 5.03L2 22l5.25-1.38a9.86 9.86 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.79 14.07c-.24.68-1.41 1.32-1.93 1.39-.5.07-1.13.1-1.81-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.15-4.94-4.34-.14-.19-1.18-1.57-1.18-3 0-1.43.75-2.13 1.02-2.42.27-.29.59-.36.79-.36.2 0 .39.002.56.01.18.008.42-.07.65.5.24.59.81 2.03.88 2.18.07.15.12.33.02.53-.1.2-.15.32-.3.49-.15.17-.31.38-.45.51-.15.14-.3.29-.13.58.18.29.8 1.32 1.71 2.13 1.18 1.04 2.17 1.37 2.48 1.52.31.15.49.13.67-.08.18-.21.78-.91.99-1.22.21-.31.42-.26.69-.16.27.1 1.72.81 2.01.96.29.15.49.22.56.34.07.13.07.74-.17 1.41Z"/></svg>';
 
 
     function getAvatarInnerHtml() {
@@ -2492,13 +2503,10 @@
       const db = window.__movicelDb;
       const fs = window.__movicelFirestore;
       const user = window.__currentUser;
-      console.log('[DIAG] attachProfileSync() chamado. db?', !!db, '| fs?', !!fs, '| user?', !!user, '| uid =', user && user.uid);
-      if(!db || !fs || !user) { console.log('[DIAG] attachProfileSync() saiu mais cedo (faltou db/fs/user).'); return; }
+      if(!db || !fs || !user) { return; }
       try {
         unsubscribeProfileSync = fs.onSnapshot(fs.doc(db, 'perfisUtilizador', user.uid), (snap) => {
-          console.log('[DIAG] onSnapshot perfil disparou. snap.exists() =', snap.exists(), '| data =', snap.exists() ? JSON.stringify(snap.data()) : null);
           if(!snap.exists()) {
-            // Sem documento de perfil ainda: não há tipo a aplicar, mas não deixar o botão pendente do teto de segurança.
             marcarTipoResolvido();
             if(typeof window.__recBootResolverTipo === 'function') {
               window.__recBootResolverTipo();
@@ -2513,7 +2521,6 @@
           if(data.provincia && data.provincia !== getProvinciaUsuario()) { _provinciaCache = data.provincia; changed = true; }
           if(data.tipo && data.tipo !== getTipoUsuario()) { _tipoCache = data.tipo; changed = true; }
           if(data.tipo) {
-            // Tipo confirmado pelo servidor: marca como resolvido e libera qualquer espera em curso (overlay/teto de segurança).
             marcarTipoResolvido();
             if(typeof window.__recBootResolverTipo === 'function') {
               window.__recBootResolverTipo();
@@ -2572,6 +2579,14 @@
               <div class="settings-list-text">
                 <strong>Dashboard de Vendas</strong>
                 <span>Gráficos e totais das suas recargas</span>
+              </div>
+              <span class="settings-list-chevron">›</span>
+            </div>
+            <div class="settings-list-item" onclick="enviarRelatorioVendasWhatsApp()">
+              <span class="settings-list-icon">${ICON_WHATSAPP}</span>
+              <div class="settings-list-text">
+                <strong>Enviar Relatório de Vendas</strong>
+                <span>Partilhar resumo das vendas no WhatsApp</span>
               </div>
               <span class="settings-list-chevron">›</span>
             </div>
@@ -3583,6 +3598,62 @@ function renderDashboard() {
 }
 
 
+function enviarRelatorioVendasWhatsApp() {
+  const history = getHistory();
+  const historyConcluido = history.filter(it => it.status === 'sucesso');
+
+  if (history.length === 0) {
+    openSettingsModal(ICON_WHATSAPP, 'Relatório de Vendas', `
+      <p>Ainda não há vendas registadas para enviar no relatório.</p>
+    `);
+    return;
+  }
+
+  const totalVendido = historyConcluido.reduce((s, it) => s + Number(it.valor || 0), 0);
+  const totalConcluidas = historyConcluido.length;
+  const ticketMedio = totalConcluidas ? Math.round(totalVendido / totalConcluidas) : 0;
+
+  const statusOrder = ['sucesso', 'pendente', 'falhou'];
+  const statusLabels = { sucesso: 'Sucesso', pendente: 'Pendente', falhou: 'Falhou' };
+  const statusCount = { sucesso: 0, pendente: 0, falhou: 0 };
+  history.forEach(it => {
+    const st = statusOrder.includes(it.status) ? it.status : 'pendente';
+    statusCount[st]++;
+  });
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const vendasHoje = historyConcluido.reduce((s, it) => {
+    const dt = parseHistDate(it.data);
+    if (!isNaN(dt.getTime()) &&
+        dt.getFullYear() === hoje.getFullYear() &&
+        dt.getMonth() === hoje.getMonth() &&
+        dt.getDate() === hoje.getDate()) {
+      return s + Number(it.valor || 0);
+    }
+    return s;
+  }, 0);
+
+  const dataExibicao = hoje.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const nome = getNomeUsuario();
+
+  let texto = `*Relatório de Vendas — Recargas Movicel*\n`;
+  texto += `Vendedor: ${nome}\n`;
+  texto += `Data: ${dataExibicao}\n\n`;
+  texto += `Total vendido: AKZ ${totalVendido.toLocaleString('pt-AO')}\n`;
+  texto += `Vendido hoje: AKZ ${vendasHoje.toLocaleString('pt-AO')}\n`;
+  texto += `Recargas concluídas: ${totalConcluidas}\n`;
+  texto += `Ticket médio: AKZ ${ticketMedio.toLocaleString('pt-AO')}\n\n`;
+  texto += `*Por estado:*\n`;
+  statusOrder.forEach(key => {
+    if (statusCount[key] > 0) texto += `${statusLabels[key]}: ${statusCount[key]}\n`;
+  });
+
+  const url = `https://wa.me/244955597211?text=${encodeURIComponent(texto)}`;
+  window.open(url, '_blank', 'noopener');
+}
+
+
 function updateValorTotal() {
   const el = document.getElementById('valorTotal');
   if(el) {
@@ -3705,6 +3776,15 @@ function toggleAddContactForm() {
   const submitBtn     = document.getElementById('authSubmitBtn');
   const btnLabel      = document.getElementById('authBtnLabel');
   const msgEl         = document.getElementById('authMsg');
+  const authTitleEl   = document.getElementById('authTitle');
+  const authSubTitleEl = document.getElementById('authSubTitle');
+  const confirmWrap   = document.getElementById('authConfirmWrap');
+  const confirmInput  = document.getElementById('authConfirmInput');
+  const confirmToggle = document.getElementById('authConfirmToggle');
+  const switchBtn     = document.getElementById('authSwitchBtn');
+  const switchWrap    = document.getElementById('authSwitchWrap');
+  let authMode = 'login';
+  let isSubmitting = false;
   const nameScreen     = document.getElementById('nameScreen');
   const nameFirstInput = document.getElementById('nameFirstInput');
   const nameLastInput  = document.getElementById('nameLastInput');
@@ -3749,6 +3829,7 @@ function toggleAddContactForm() {
     const {
       getAuth,
       signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
       signOut,
       onAuthStateChanged,
       updateProfile
@@ -3782,6 +3863,7 @@ function toggleAddContactForm() {
     auth = getAuth(fbApp);
     window.__movicelAuth = auth;
     window.__movicelSignIn = signInWithEmailAndPassword;
+    window.__movicelSignUp = createUserWithEmailAndPassword;
     window.__movicelSignOut = () => signOut(auth);
     window.__movicelOnAuthStateChanged = onAuthStateChanged;
     window.__movicelUpdateProfile = updateProfile;
@@ -3800,13 +3882,59 @@ function toggleAddContactForm() {
 
   numberInput.addEventListener('input', () => {
     numberInput.value = numberInput.value.replace(/\D/g, '').slice(0, 9);
+    pararContagemBloqueio();
     clearMsg();
+    const numeroAtual = numberInput.value.trim();
+    if (authMode === 'login' && /^\d{9}$/.test(numeroAtual)) {
+      verificarBloqueio(numeroAtual);
+    }
   });
 
   passToggle.addEventListener('click', () => {
     const showing = passInput.type === 'text';
     passInput.type = showing ? 'password' : 'text';
     passToggle.classList.toggle('active', !showing);
+  });
+
+  if (confirmToggle) {
+    confirmToggle.addEventListener('click', () => {
+      const showing = confirmInput.type === 'text';
+      confirmInput.type = showing ? 'password' : 'text';
+      confirmToggle.classList.toggle('active', !showing);
+    });
+  }
+
+  function setAuthMode(mode) {
+    authMode = mode;
+    isSubmitting = false;
+    pararContagemBloqueio();
+    pararContagemSignup();
+    submitBtn.disabled = false;
+    clearMsg();
+    if (mode === 'signup') {
+      authTitleEl.textContent = 'Criar conta';
+      authSubTitleEl.textContent = 'Preencha os dados para se registar';
+      btnLabel.textContent = 'Criar conta';
+      confirmWrap.style.display = '';
+      switchWrap.innerHTML = 'Já tem conta? <button type="button" id="authSwitchBtn">Entrar</button>';
+      verificarBloqueioSignup();
+    } else {
+      authTitleEl.textContent = 'Entrar';
+      authSubTitleEl.textContent = 'Aceda à sua conta para continuar';
+      btnLabel.textContent = 'Entrar';
+      confirmWrap.style.display = 'none';
+      confirmInput.value = '';
+      switchWrap.innerHTML = 'Ainda não tem conta? <button type="button" id="authSwitchBtn">Criar conta</button>';
+      const numeroAtual = numberInput.value.trim();
+      if (/^\d{9}$/.test(numeroAtual)) verificarBloqueio(numeroAtual);
+    }
+    document.getElementById('authSwitchBtn').addEventListener('click', () => {
+      setAuthMode(authMode === 'login' ? 'signup' : 'login');
+    });
+  }
+
+  switchBtn.addEventListener('click', () => {
+    setAuthMode(authMode === 'login' ? 'signup' : 'login');
   });
 
   function clearMsg() { msgEl.textContent = ''; }
@@ -3820,6 +3948,13 @@ function toggleAddContactForm() {
     submitBtn.classList.toggle('loading', loading);
     numberInput.disabled = loading;
     passInput.disabled = loading;
+    if (confirmInput) confirmInput.disabled = loading;
+    if (switchBtn) switchBtn.disabled = loading;
+    if (loading) {
+      btnLabel.textContent = authMode === 'signup' ? 'A criar conta…' : 'A entrar…';
+    } else {
+      btnLabel.textContent = authMode === 'signup' ? 'Criar conta' : 'Entrar';
+    }
     if (authLoadingOverlay) authLoadingOverlay.classList.toggle('active', loading);
   }
 
@@ -3835,6 +3970,8 @@ function toggleAddContactForm() {
       case 'auth/user-not-found':
       case 'auth/invalid-credential':
       case 'auth/wrong-password': return 'Número ou senha incorrectos.';
+      case 'auth/email-already-in-use': return 'Já existe uma conta com este número. Tente entrar.';
+      case 'auth/weak-password': return 'A senha é demasiado fraca. Use no mínimo 6 caracteres.';
       case 'auth/too-many-requests': return 'Muitas tentativas. Aguarde um momento.';
       case 'auth/network-request-failed': return 'Sem conexão à internet.';
       case 'auth/configuration-not-found': return 'Login por Email/Senha não está activado no Firebase.';
@@ -3850,11 +3987,159 @@ function toggleAddContactForm() {
     ]);
   }
 
+  const BRUTE_KEY = 'movicelAuthAttempts_v1';
+  const MAX_TENTATIVAS_LIVRES = 5;
+  const BLOQUEIO_BASE_MS = 30 * 1000;
+  const BLOQUEIO_MAX_MS = 15 * 60 * 1000;
+  let bruteTickInterval = null;
+
+  function lerRegistoTentativas() {
+    try {
+      const raw = localStorage.getItem(BRUTE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function gravarRegistoTentativas(reg) {
+    try { localStorage.setItem(BRUTE_KEY, JSON.stringify(reg)); } catch (e) {}
+  }
+  function getRegistoNumero(numero) {
+    const reg = lerRegistoTentativas();
+    return reg[numero] || { falhas: 0, bloqueadoAte: 0, nivel: 0 };
+  }
+  function limparRegistoNumero(numero) {
+    const reg = lerRegistoTentativas();
+    delete reg[numero];
+    gravarRegistoTentativas(reg);
+  }
+  function registarFalha(numero) {
+    const reg = lerRegistoTentativas();
+    const atual = reg[numero] || { falhas: 0, bloqueadoAte: 0, nivel: 0 };
+    atual.falhas += 1;
+    if (atual.falhas >= MAX_TENTATIVAS_LIVRES) {
+      const duracao = Math.min(BLOQUEIO_BASE_MS * Math.pow(2, atual.nivel), BLOQUEIO_MAX_MS);
+      atual.bloqueadoAte = Date.now() + duracao;
+      atual.nivel += 1;
+      atual.falhas = 0;
+    }
+    reg[numero] = atual;
+    gravarRegistoTentativas(reg);
+    return atual;
+  }
+  function segundosRestantesBloqueio(numero) {
+    const atual = getRegistoNumero(numero);
+    const restante = atual.bloqueadoAte - Date.now();
+    return restante > 0 ? Math.ceil(restante / 1000) : 0;
+  }
+  function formatarTempo(segundos) {
+    if (segundos >= 60) {
+      const min = Math.floor(segundos / 60);
+      const seg = segundos % 60;
+      return seg > 0 ? `${min} min ${seg}s` : `${min} min`;
+    }
+    return `${segundos}s`;
+  }
+  function pararContagemBloqueio() {
+    if (bruteTickInterval) { clearInterval(bruteTickInterval); bruteTickInterval = null; }
+  }
+  function iniciarContagemBloqueio(numero) {
+    pararContagemBloqueio();
+    const atualizar = () => {
+      const restantes = segundosRestantesBloqueio(numero);
+      if (restantes <= 0) {
+        pararContagemBloqueio();
+        clearMsg();
+        submitBtn.disabled = false;
+        return;
+      }
+      submitBtn.disabled = true;
+      showMsg(`Demasiadas tentativas. Tente novamente em ${formatarTempo(restantes)}.`, false);
+    };
+    atualizar();
+    bruteTickInterval = setInterval(atualizar, 1000);
+  }
+  function verificarBloqueio(numero) {
+    const restantes = segundosRestantesBloqueio(numero);
+    if (restantes > 0) {
+      iniciarContagemBloqueio(numero);
+      return true;
+    }
+    return false;
+  }
+
+  const SIGNUP_KEY = 'movicelSignupAttempts_v1';
+  const SIGNUP_JANELA_MS = 10 * 60 * 1000;
+  const SIGNUP_MAX_NA_JANELA = 3;
+  const SIGNUP_BLOQUEIO_BASE_MS = 2 * 60 * 1000;
+  const SIGNUP_BLOQUEIO_MAX_MS = 30 * 60 * 1000;
+  let signupTickInterval = null;
+
+  function lerRegistoSignup() {
+    try {
+      const raw = localStorage.getItem(SIGNUP_KEY);
+      return raw ? JSON.parse(raw) : { eventos: [], bloqueadoAte: 0, nivel: 0 };
+    } catch (e) { return { eventos: [], bloqueadoAte: 0, nivel: 0 }; }
+  }
+  function gravarRegistoSignup(reg) {
+    try { localStorage.setItem(SIGNUP_KEY, JSON.stringify(reg)); } catch (e) {}
+  }
+  function segundosRestantesBloqueioSignup() {
+    const reg = lerRegistoSignup();
+    const restante = reg.bloqueadoAte - Date.now();
+    return restante > 0 ? Math.ceil(restante / 1000) : 0;
+  }
+  function pararContagemSignup() {
+    if (signupTickInterval) { clearInterval(signupTickInterval); signupTickInterval = null; }
+  }
+  function iniciarContagemSignup() {
+    pararContagemSignup();
+    const atualizar = () => {
+      const restantes = segundosRestantesBloqueioSignup();
+      if (restantes <= 0) {
+        pararContagemSignup();
+        clearMsg();
+        submitBtn.disabled = false;
+        return;
+      }
+      submitBtn.disabled = true;
+      showMsg(`Demasiadas contas criadas em pouco tempo. Tente novamente em ${formatarTempo(restantes)}.`, false);
+    };
+    atualizar();
+    signupTickInterval = setInterval(atualizar, 1000);
+  }
+  function verificarBloqueioSignup() {
+    const restantes = segundosRestantesBloqueioSignup();
+    if (restantes > 0) {
+      iniciarContagemSignup();
+      return true;
+    }
+    return false;
+  }
+  function registarTentativaSignup() {
+    const reg = lerRegistoSignup();
+    const agora = Date.now();
+    reg.eventos = (reg.eventos || []).filter(t => agora - t < SIGNUP_JANELA_MS);
+    reg.eventos.push(agora);
+    if (reg.eventos.length > SIGNUP_MAX_NA_JANELA) {
+      const duracao = Math.min(SIGNUP_BLOQUEIO_BASE_MS * Math.pow(2, reg.nivel || 0), SIGNUP_BLOQUEIO_MAX_MS);
+      reg.bloqueadoAte = agora + duracao;
+      reg.nivel = (reg.nivel || 0) + 1;
+      reg.eventos = [];
+    }
+    gravarRegistoSignup(reg);
+    return reg;
+  }
+
   submitBtn.addEventListener('click', async () => {
+    if (isSubmitting) return;
+    isSubmitting = true;
+
     clearMsg();
+    pararContagemBloqueio();
+    pararContagemSignup();
 
     if (!auth || !window.__movicelSignIn) {
       showMsg('A ligação ao servidor ainda não está pronta. Aguarde um instante e tente novamente.', false);
+      isSubmitting = false;
       return;
     }
 
@@ -3862,21 +4147,53 @@ function toggleAddContactForm() {
     const senha = passInput.value;
 
     const erroNumero = validarNumero(numero);
-    if (erroNumero) { showMsg(erroNumero, false); return; }
-    if (!senha || senha.length < 6) { showMsg('A senha deve ter no mínimo 6 caracteres.', false); return; }
+    if (erroNumero) { showMsg(erroNumero, false); isSubmitting = false; return; }
+
+    if (authMode === 'login' && verificarBloqueio(numero)) { isSubmitting = false; return; }
+    if (authMode === 'signup' && verificarBloqueioSignup()) { isSubmitting = false; return; }
+
+    if (!senha || senha.length < 6) { showMsg('A senha deve ter no mínimo 6 caracteres.', false); isSubmitting = false; return; }
+
+    if (authMode === 'signup') {
+      const confirmacao = confirmInput.value;
+      if (confirmacao !== senha) { showMsg('As senhas não coincidem.', false); isSubmitting = false; return; }
+    }
 
     const email = `${numero}@gmail.com`;
     setLoading(true);
     try {
-      await withTimeout(window.__movicelSignIn(auth, email, senha), 15000);
+      if (authMode === 'signup') {
+        const regSignup = registarTentativaSignup();
+        if (regSignup.bloqueadoAte > Date.now()) {
+          setLoading(false);
+          isSubmitting = false;
+          iniciarContagemSignup();
+          return;
+        }
+        await withTimeout(window.__movicelSignUp(auth, email, senha), 15000);
+        limparRegistoNumero(numero);
+      } else {
+        await withTimeout(window.__movicelSignIn(auth, email, senha), 15000);
+        limparRegistoNumero(numero);
+      }
     } catch (err) {
       setLoading(false);
-      console.error('Erro de login:', err);
+      isSubmitting = false;
+      console.error('Erro de autenticação:', err);
+      const codigosCredencial = ['auth/wrong-password', 'auth/invalid-credential', 'auth/user-not-found'];
+      if (authMode === 'login' && codigosCredencial.includes(err && err.code)) {
+        const atual = registarFalha(numero);
+        if (atual.bloqueadoAte > Date.now()) {
+          iniciarContagemBloqueio(numero);
+          return;
+        }
+      }
       showMsg(friendlyAuthError(err && err.code), false);
     }
   });
 
-  [numberInput, passInput].forEach(inp => {
+  [numberInput, passInput, confirmInput].forEach(inp => {
+    if (!inp) return;
     inp.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') submitBtn.click();
     });
@@ -3956,6 +4273,7 @@ function toggleAddContactForm() {
 
   window.__movicelOnAuthStateChanged(auth, (user) => {
     setLoading(false);
+    isSubmitting = false;
     if (user) {
       authScreen.style.display = 'none';
       window.__currentUser = user;
@@ -3974,8 +4292,13 @@ function toggleAddContactForm() {
       authScreen.style.display = 'flex';
       nameScreen.style.display = 'none';
       appRoot.style.display = 'none';
+      pararContagemBloqueio();
+      pararContagemSignup();
+      submitBtn.disabled = false;
       numberInput.value = '';
       passInput.value = '';
+      if (confirmInput) confirmInput.value = '';
+      if (authMode !== 'login') setAuthMode('login');
       window.__currentUser = null;
       if (typeof window.detachPedidosListener === 'function') window.detachPedidosListener();
       if (typeof window.detachHistorySync === 'function') window.detachHistorySync();
