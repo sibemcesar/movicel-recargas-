@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Recargas Movicel — Pede a tua recarga em segundos</title>
+<meta name="description" content="Recargas Movicel: peça recargas Movicel direto do telemóvel, acompanhe o histórico e pague por Multicaixa Express ou Unitel Money. Central de vendas independente.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --vermelho:#c20021;
+    --vermelho-vivo:#e0102f;
+    --vermelho-fundo:#a4001c;
+    --teal:#11bcaa;
+    --tinta:#1a1622;
+    --tinta-suave:#46455e;
+    --papel:#fdf7f4;
+    --papel-card:#ffffff;
+    --linha:#f1e6e3;
+    --maxw:1120px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--papel);
+    color:var(--tinta);
+    font-family:'Archivo',Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.disp{ font-family:'Space Grotesk',sans-serif; letter-spacing:-0.01em; }
+  a{ color:inherit; }
+  img{ max-width:100%; display:block; }
+  .wrap{ max-width:var(--maxw); margin:0 auto; padding:0 24px; }
+  .ticker{
+    position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:0.05;
+    background-image: repeating-linear-gradient(0deg, var(--vermelho) 0 2px, transparent 2px 64px);
+  }
+  nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(253,247,244,0.86);
+    backdrop-filter: blur(10px);
+    border-bottom:1px solid var(--linha);
+  }
+  .nav-inner{ display:flex; align-items:center; justify-content:space-between; height:68px; }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.05em; }
+  .brand img{ width:32px; height:32px; border-radius:9px; object-fit:cover; }
+  .nav-links{ display:flex; gap:28px; font-size:0.92em; font-weight:600; color:var(--tinta-suave); }
+  .nav-links a{ text-decoration:none; transition:color .15s; }
+  .nav-links a:hover{ color:var(--vermelho); }
+  .nav-cta{
+    background:linear-gradient(135deg,var(--vermelho-vivo),var(--vermelho-fundo));
+    color:#fff; padding:10px 20px; border-radius:30px; font-weight:700; font-size:0.88em;
+    text-decoration:none; box-shadow:0 6px 16px rgba(194,0,33,0.25);
+    white-space:nowrap;
+  }
+  @media (max-width:760px){ .nav-links{ display:none; } }
+  .hero{ padding:64px 0 40px; position:relative; }
+  .hero-grid{ display:grid; grid-template-columns:1.1fr 0.9fr; gap:56px; align-items:center; }
+  @media (max-width:880px){ .hero-grid{ grid-template-columns:1fr; gap:36px; } }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:0.78em; font-weight:700; text-transform:uppercase; letter-spacing:0.08em;
+    color:var(--vermelho); background:#fbe9ea; padding:7px 14px; border-radius:30px; margin-bottom:18px;
+  }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--teal); }
+  .hero h1{ font-size:clamp(2.1em,5.5vw,3.4em); font-weight:700; line-height:1.05; margin:0 0 18px; }
+  .hero h1 span{ color:var(--vermelho); }
+  .hero p.lead{ font-size:1.15em; color:var(--tinta-suave); line-height:1.55; max-width:480px; margin:0 0 30px; }
+  .btn-row{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:22px; }
+  .btn-primary{
+    display:inline-flex; align-items:center; gap:10px;
+    background:linear-gradient(135deg,var(--vermelho-vivo),var(--vermelho-fundo));
+    color:#fff; padding:16px 28px; border-radius:14px; font-weight:700; font-size:1em;
+    text-decoration:none; box-shadow:0 10px 24px rgba(194,0,33,0.32);
+    transition:transform .15s, box-shadow .15s;
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(194,0,33,0.4); }
+  .btn-primary svg{ width:22px; height:22px; flex-shrink:0; }
+  .btn-secondary{
+    display:inline-flex; align-items:center; gap:8px;
+    border:2px solid var(--linha); color:var(--tinta);
+    padding:14px 24px; border-radius:14px; font-weight:700; font-size:1em;
+    text-decoration:none; transition:border-color .15s, color .15s;
+  }
+  .btn-secondary:hover{ border-color:var(--vermelho); color:var(--vermelho); }
+  .trust-row{ display:flex; flex-wrap:wrap; gap:18px; font-size:0.86em; color:var(--tinta-suave); font-weight:600; }
+  .trust-row span{ display:inline-flex; align-items:center; gap:6px; }
+  .trust-row svg{ width:16px; height:16px; color:var(--teal); flex-shrink:0; }
+  .phone-stage{ position:relative; display:flex; justify-content:center; }
+  .phone{
+    width:272px; border-radius:42px; background:#0e0c12; padding:12px;
+    box-shadow:0 30px 60px rgba(20,10,15,0.28), 0 4px 12px rgba(20,10,15,0.18);
+    position:relative; z-index:2;
+  }
+  .phone-screen{
+    background:#fff; border-radius:30px; overflow:hidden; position:relative;
+    aspect-ratio:9/19.5;
+    display:flex; flex-direction:column;
+  }
+  .phone-header{
+    background:linear-gradient(135deg,#e0102f,#a4001c);
+    padding:30px 16px 14px; display:flex; align-items:center; gap:10px; color:#fff;
+  }
+  .phone-header img{ width:30px; height:30px; border-radius:9px; }
+  .phone-header b{ font-size:0.78em; font-weight:800; }
+  .phone-header small{ display:block; font-size:0.6em; opacity:0.75; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+  .phone-body{ padding:18px 14px; flex:1; }
+  .phone-card{
+    background:linear-gradient(135deg,#e0102f,#a4001c); color:#fff; border-radius:16px;
+    padding:14px 16px; margin-bottom:14px; box-shadow:0 8px 18px rgba(194,0,33,0.25);
+  }
+  .phone-card small{ opacity:0.8; font-weight:700; font-size:0.62em; text-transform:uppercase; letter-spacing:.05em; }
+  .phone-card .val{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.5em; margin-top:4px; }
+  .phone-row{
+    display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid #f3eeec;
+  }
+  .phone-row:last-child{ border-bottom:none; }
+  .phone-row .ico{
+    width:30px; height:30px; border-radius:9px; background:#fbe9ea; color:var(--vermelho);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .phone-row .ico svg{ width:15px; height:15px; }
+  .phone-row .tx{ flex:1; min-width:0; }
+  .phone-row .tx b{ display:block; font-size:0.72em; font-weight:700; color:var(--tinta); }
+  .phone-row .tx span{ font-size:0.62em; color:#9b98a3; }
+  .float-badge{
+    position:absolute; background:#fff; border-radius:14px; padding:10px 14px;
+    box-shadow:0 12px 24px rgba(20,10,15,0.14); display:flex; align-items:center; gap:8px;
+    font-size:0.78em; font-weight:700; z-index:3; animation:floaty 4.5s ease-in-out infinite;
+  }
+  .float-badge svg{ width:18px; height:18px; }
+  .badge-1{ top:8%; left:-8%; color:var(--teal); }
+  .badge-2{ bottom:14%; right:-10%; color:var(--vermelho); animation-delay:1.2s; }
+  @keyframes floaty{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
+  @media (max-width:880px){ .phone{ width:230px; } .float-badge{ display:none; } }
+  section{ padding:88px 0; }
+  .section-head{ text-align:center; max-width:620px; margin:0 auto 56px; }
+  .section-head .eyebrow{ margin-bottom:14px; }
+  .section-head h2{ font-size:clamp(1.7em,3.6vw,2.4em); font-weight:700; margin:0 0 14px; }
+  .section-head p{ color:var(--tinta-suave); font-size:1.05em; line-height:1.55; margin:0; }
+  .steps{ display:grid; grid-template-columns:repeat(4,1fr); gap:22px; }
+  @media (max-width:880px){ .steps{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:540px){ .steps{ grid-template-columns:1fr; } }
+  .step-card{
+    background:var(--papel-card); border:1px solid var(--linha); border-radius:18px; padding:26px 22px;
+    position:relative;
+  }
+  .step-num{
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:0.78em; color:#fff;
+    background:linear-gradient(135deg,var(--vermelho-vivo),var(--vermelho-fundo));
+    width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    margin-bottom:16px;
+  }
+  .step-card h3{ font-size:1.05em; margin:0 0 8px; }
+  .step-card p{ font-size:0.88em; color:var(--tinta-suave); line-height:1.5; margin:0; }
+  .step-arrow{ display:none; }
+  .feat-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+  @media (max-width:880px){ .feat-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:580px){ .feat-grid{ grid-template-columns:1fr; } }
+  .feat-card{
+    background:var(--papel-card); border:1px solid var(--linha); border-radius:18px; padding:26px;
+    transition:border-color .15s, transform .15s;
+  }
+  .feat-card:hover{ border-color:var(--vermelho); transform:translateY(-3px); }
+  .feat-ico{
+    width:46px; height:46px; border-radius:13px; background:#fbe9ea; color:var(--vermelho);
+    display:flex; align-items:center; justify-content:center; margin-bottom:16px;
+  }
+  .feat-ico svg{ width:22px; height:22px; }
+  .feat-card h3{ font-size:1.05em; margin:0 0 8px; }
+  .feat-card p{ font-size:0.88em; color:var(--tinta-suave); line-height:1.5; margin:0; }
+  .pay-band{ background:var(--tinta); color:#fff; border-radius:28px; padding:48px 36px; }
+  .pay-inner{ display:flex; align-items:center; justify-content:space-between; gap:40px; flex-wrap:wrap; }
+  .pay-text h2{ color:#fff; font-size:1.7em; margin:0 0 10px; }
+  .pay-text p{ color:#bdb9c4; max-width:380px; line-height:1.55; margin:0; }
+  .pay-pills{ display:flex; gap:12px; flex-wrap:wrap; }
+  .pay-pill{
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14);
+    padding:12px 18px; border-radius:30px; font-weight:700; font-size:0.86em;
+    display:flex; align-items:center; gap:8px;
+  }
+  .pay-pill svg{ width:16px; height:16px; color:var(--teal); }
+  .about-grid{ display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:center; }
+  @media (max-width:880px){ .about-grid{ grid-template-columns:1fr; } }
+  .about-card{
+    background:var(--papel-card); border:1px solid var(--linha); border-radius:20px; padding:30px;
+  }
+  .about-card p{ color:var(--tinta-suave); line-height:1.65; font-size:0.95em; margin:0 0 14px; }
+  .about-card p:last-child{ margin-bottom:0; }
+  .notice{
+    border-left:4px solid var(--vermelho); background:#fbe9ea; padding:14px 18px; border-radius:0 12px 12px 0;
+    font-size:0.86em; color:var(--vermelho-fundo); font-weight:600; line-height:1.5;
+  }
+  .cta-final{
+    background:linear-gradient(135deg,var(--vermelho-vivo),var(--vermelho-fundo));
+    border-radius:28px; padding:60px 40px; text-align:center; color:#fff; position:relative; overflow:hidden;
+  }
+  .cta-final h2{ font-size:clamp(1.7em,4vw,2.4em); margin:0 0 14px; color:#fff; }
+  .cta-final p{ color:rgba(255,255,255,0.85); max-width:480px; margin:0 auto 30px; line-height:1.55; }
+  .cta-final .btn-primary{ background:#fff; color:var(--vermelho); box-shadow:0 10px 24px rgba(0,0,0,0.2); }
+  .cta-final .btn-primary:hover{ box-shadow:0 14px 30px rgba(0,0,0,0.28); }
+  footer{ padding:44px 0 32px; border-top:1px solid var(--linha); }
+  .foot-inner{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:18px; }
+  .foot-brand{ display:flex; align-items:center; gap:10px; font-weight:800; }
+  .foot-brand img{ width:28px; height:28px; border-radius:8px; }
+  .foot-links{ display:flex; gap:22px; font-size:0.86em; color:var(--tinta-suave); font-weight:600; flex-wrap:wrap; }
+  .foot-links a{ text-decoration:none; }
+  .foot-links a:hover{ color:var(--vermelho); }
+  .foot-note{ font-size:0.78em; color:#a6a3ad; margin-top:18px; line-height:1.5; }
+  .reveal{ opacity:0; transform:translateY(18px); transition:opacity .6s ease, transform .6s ease; }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+  @media (prefers-reduced-motion:reduce){
+    .float-badge{ animation:none; }
+    .reveal{ transition:none; opacity:1; transform:none; }
+  }
+</style>
+</head>
+<body>
+<div class="ticker"></div>
+<nav>
+  <div class="wrap nav-inner">
+    <div class="brand">
+      <img src="https://payload.cargocollective.com/1/4/142184/1911801/logo3.png" alt="Recargas Movicel">
+      Recargas Movicel
+    </div>
+    <div class="nav-links">
+      <a href="#como-funciona">Como funciona</a>
+      <a href="#funcionalidades">Funcionalidades</a>
+      <a href="#pagamentos">Pagamentos</a>
+      <a href="#sobre">Sobre</a>
+    </div>
+    <a class="nav-cta" href="https://www.mediafire.com/file/1mhtxq3jvzbf1u0/Recargas+Movicel+1.0.apk/file" target="_blank" rel="noopener">Descarregar</a>
+  </div>
+</nav>
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow"><span class="dot"></span>Central de vendas independente</span>
+      <h1>Peça a sua <span>recarga Movicel</span> sem saltar filas de atendimento</h1>
+      <p class="lead">Escolha o número, o valor e o método de pagamento — a nossa equipa recebe o pedido e processa a recarga manualmente, todos os dias, das 6h às 23h.</p>
+      <div class="btn-row">
+        <a class="btn-primary" href="https://www.mediafire.com/file/1mhtxq3jvzbf1u0/Recargas+Movicel+1.0.apk/file" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a1 1 0 0 1 1 1v10.59l3.3-3.3a1 1 0 1 1 1.4 1.42l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.42l3.3 3.3V3a1 1 0 0 1 1-1Z"/><path d="M5 19a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Z"/></svg>
+          Descarregar APK
+        </a>
+        <a class="btn-secondary" href="https://wa.me/244955597211" target="_blank" rel="noopener">Falar no WhatsApp</a>
+      </div>
+      <div class="trust-row">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Atendimento das 6h às 23h</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Multicaixa Express &amp; Unitel Money</span>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Histórico das suas recargas</span>
+      </div>
+    </div>
+    <div class="phone-stage">
+      <div class="float-badge badge-1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+        Recarga enviada
+      </div>
+      <div class="float-badge badge-2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 10h18M7 15h2m4 0h4M5 6h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"/></svg>
+        Pago via M. Express
+      </div>
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="phone-header">
+            <img src="https://payload.cargocollective.com/1/4/142184/1911801/logo3.png" alt="">
+            <div>
+              <small>Central de Recargas</small>
+              <b>Movicel</b>
+            </div>
+          </div>
+          <div class="phone-body">
+            <div class="phone-card">
+              <small>Valor da recarga</small>
+              <div class="val">AKZ 2.500</div>
+            </div>
+            <div class="phone-row">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.97.32 1.92.57 2.85a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.23-1.14a2 2 0 0 1 2.11-.45c.93.25 1.88.44 2.85.57a2 2 0 0 1 1.72 2.03Z"/></svg></div>
+              <div class="tx"><b>912 345 678</b><span>Número a recarregar</span></div>
+            </div>
+            <div class="phone-row">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg></div>
+              <div class="tx"><b>Multicaixa Express</b><span>Método de pagamento</span></div>
+            </div>
+            <div class="phone-row">
+              <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></div>
+              <div class="tx"><b>Pedido em processamento</b><span>A equipa foi notificada</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+<section id="como-funciona">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span>O caminho do seu pedido</span>
+      <h2>Quatro passos, sem complicação</h2>
+      <p>O app organiza o pedido — quem coloca a recarga no seu número é a nossa equipa, em pessoa.</p>
+    </div>
+    <div class="steps">
+      <div class="step-card reveal">
+        <div class="step-num">1</div>
+        <h3>Escolha o número</h3>
+        <p>Insira o número Movicel a recarregar ou selecione um dos seus contactos guardados.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">2</div>
+        <h3>Defina o valor</h3>
+        <p>Indique quanto quer carregar — a partir de 100 AKZ, sem limite de pedidos por dia.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">3</div>
+        <h3>Pague como preferir</h3>
+        <p>Multicaixa Express, Unitel Money, Afrimoney, PayPal AO ou troca direta de recargas.</p>
+      </div>
+      <div class="step-card reveal">
+        <div class="step-num">4</div>
+        <h3>Receba a confirmação</h3>
+        <p>A nossa equipa processa o pedido e você acompanha tudo pelo histórico e pelas notificações.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="funcionalidades">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="eyebrow"><span class="dot"></span>Dentro do app</span>
+      <h2>Feito para quem vive de recargas</h2>
+      <p>Quer seja para uso próprio ou para revender, o app guarda tudo o que precisa de controlar.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.97.32 1.92.57 2.85a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.23-1.14a2 2 0 0 1 2.11-.45c.93.25 1.88.44 2.85.57a2 2 0 0 1 1.72 2.03Z"/></svg></div>
+        <h3>Contactos guardados</h3>
+        <p>Salve os números que mais recarrega e peça novamente em dois toques.</p>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-5 3 3 5-7"/></svg></div>
+        <h3>Histórico completo</h3>
+        <p>Veja todas as recargas enviadas, valores e estado de cada pedido, a qualquer hora.</p>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <h3>PIN de segurança</h3>
+        <p>Proteja o envio das suas recargas com um PIN de 4 dígitos só seu.</p>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><rect x="7" y="13" width="3" height="5"/><rect x="12" y="9" width="3" height="9"/><rect x="17" y="6" width="3" height="12"/></svg></div>
+        <h3>Dashboard de vendas</h3>
+        <p>Para quem revende: gráficos e totais das recargas vendidas, por dia ou por período.</p>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+        <h3>Notificações em tempo real</h3>
+        <p>Saiba assim que a sua recarga é concluída ou se um pedido precisa de atenção.</p>
+      </div>
+      <div class="feat-card reveal">
+        <div class="feat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.84.5 3.56 1.36 5.03L2 22l5.25-1.38a9.86 9.86 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Z"/></svg></div>
+        <h3>Suporte direto</h3>
+        <p>Fale com a equipa pelo WhatsApp, Facebook ou telefone sempre que precisar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="pagamentos">
+  <div class="wrap">
+    <div class="pay-band reveal">
+      <div class="pay-inner">
+        <div class="pay-text">
+          <h2>Pague como já está habituado</h2>
+          <p>Sem cartões internacionais, sem complicações — métodos que já usa no dia a dia em Angola.</p>
+        </div>
+        <div class="pay-pills">
+          <span class="pay-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Multicaixa Express</span>
+          <span class="pay-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Unitel Money</span>
+          <span class="pay-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Afrimoney</span>
+          <span class="pay-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>PayPal AO</span>
+          <span class="pay-pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>Troca de recargas</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="sobre">
+  <div class="wrap about-grid">
+    <div class="reveal">
+      <span class="eyebrow"><span class="dot"></span>Transparência antes de tudo</span>
+      <h2 style="font-size:clamp(1.6em,3.2vw,2.2em); margin:0 0 16px;">Uma central de vendas, não a operadora</h2>
+      <p style="color:var(--tinta-suave); line-height:1.6; margin:0 0 18px;">Recargas Movicel é um projeto independente, desenvolvido por Sibem César para facilitar o pedido de recargas Movicel direto do telemóvel. O app organiza e encaminha os pedidos — quem os processa é uma equipa real, todos os dias, das 6h às 23h.</p>
+      <div class="notice">Este aplicativo não é oficial da Movicel. Não há vínculo, parceria ou afiliação com a operadora.</div>
+    </div>
+    <div class="about-card reveal">
+      <p><b>O que o app guarda?</b> Apenas os pedidos de recarga que envia. Saldo, histórico, contactos e configurações ficam guardados no seu próprio dispositivo ou conta.</p>
+      <p><b>Quem define o preço de venda?</b> Cada utilizador é responsável pelo valor que pratica ao revender recargas, incluindo qualquer margem cobrada acima do saldo enviado.</p>
+      <p><b>Como falar com a equipa?</b> Por WhatsApp, Facebook ou telefone — os mesmos canais disponíveis dentro do app, em Suporte.</p>
+    </div>
+  </div>
+</section>
+<section>
+  <div class="wrap">
+    <div class="cta-final reveal">
+      <h2>Pronto para pedir a sua primeira recarga?</h2>
+      <p>Descarregue o APK, crie a sua conta e envie o seu primeiro pedido em menos de um minuto.</p>
+      <a class="btn-primary" href="https://www.mediafire.com/file/1mhtxq3jvzbf1u0/Recargas+Movicel+1.0.apk/file" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a1 1 0 0 1 1 1v10.59l3.3-3.3a1 1 0 1 1 1.4 1.42l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 1 1 1.4-1.42l3.3 3.3V3a1 1 0 0 1 1-1Z"/><path d="M5 19a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1Z"/></svg>
+        Descarregar APK grátis
+      </a>
+    </div>
+  </div>
+</section>
+<footer>
+  <div class="wrap">
+    <div class="foot-inner">
+      <div class="foot-brand">
+        <img src="https://payload.cargocollective.com/1/4/142184/1911801/logo3.png" alt="">
+        Recargas Movicel
+      </div>
+      <div class="foot-links">
+        <a href="https://wa.me/244955597211" target="_blank" rel="noopener">WhatsApp</a>
+        <a href="https://www.facebook.com/profile.php?id=61578897033347" target="_blank" rel="noopener">Facebook</a>
+        <a href="tel:932535389">932 535 389</a>
+        <a href="https://www.mediafire.com/file/1mhtxq3jvzbf1u0/Recargas+Movicel+1.0.apk/file" target="_blank" rel="noopener">Descarregar APK</a>
+      </div>
+    </div>
+    <p class="foot-note">Recargas Movicel é uma central de vendas independente, sem vínculo, parceria ou afiliação com a Movicel. Atendimento todos os dias, das 6h às 23h. © 2026 Sibem César.</p>
+  </div>
+</footer>
+<script>
+  const els = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); obs.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    els.forEach(el => obs.observe(el));
+  } else {
+    els.forEach(el => el.classList.add('in'));
+  }
+</script>
+</body>
+</html>
