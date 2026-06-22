@@ -494,9 +494,15 @@
       flex:1 1 auto; background:#faf9fb; border:1.3px solid #e8e6ec; border-radius:10px;
       padding:11px 4px; font-size:0.88em; font-weight:800; color:#46455e; cursor:pointer;
       transition:background .15s, border-color .15s, color .15s;
+      display:flex; flex-direction:column; align-items:center; gap:3px;
     }
     .fis-value-btn:active { transform:scale(0.97); }
     .fis-value-btn.selected { background:#c20021; border-color:#c20021; color:#fff; }
+    .fis-value-btn.selected .fis-value-btn-pay { background:rgba(255,255,255,0.22); color:#fff; }
+    .fis-value-btn-pay {
+      font-size:0.78em; font-weight:700; color:#c20021;
+      background:rgba(194,0,33,0.10); border-radius:7px; padding:2px 7px;
+    }
 
     .cnt-page { width:90vw; max-width:420px; margin:0 auto; padding:78px 0 90px 0; box-sizing:border-box; animation: fadeIn .3s; }
     .cnt-stats-row { display:flex; gap:9px; margin-bottom:14px; }
@@ -991,8 +997,27 @@
   @keyframes rippleAnim {
     to { transform: scale(4); opacity: 0; }
   }
+  .rec-quick-val-bonus {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: #ffd84d;
+    color: #7a1a00;
+    font-size: 0.62em;
+    font-weight: 800;
+    letter-spacing: .02em;
+    border-radius: 6px;
+    padding: 2px 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
   .rec-quick-val-amount { font-size:1.22em; font-weight:800; color:#fff; letter-spacing:.01em; }
   .rec-quick-val-akz { font-size:0.65em; font-weight:700; color:rgba(255,255,255,0.75); text-transform:uppercase; letter-spacing:.06em; }
+  .rec-quick-val-pay {
+    font-size:0.66em; font-weight:700; color:#fff;
+    background:rgba(255,255,255,0.20); border-radius:8px;
+    padding:3px 8px; margin-top:2px; white-space:nowrap;
+  }
+  .rec-quick-val-pay b { font-weight:800; }
   
   .rec-valor-selected-banner {
     display:flex; align-items:center; gap:10px;
@@ -1418,6 +1443,11 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 8.25 5.27 4.5h13.46L21 8.25M3 8.25V18a2.25 2.25 0 0 0 2.25 2.25h13.5A2.25 2.25 0 0 0 21 18V8.25M3 8.25h18M9 12h6"/>
       </svg>
     </button>
+    <button id="btnContactoVendedor" class="header-icon-btn" aria-label="Apoio ao cliente" title="Apoio ao cliente" style="display:none;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h1.5a1.5 1.5 0 0 0 1.5-1.5v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106a1.5 1.5 0 0 0-1.52.499l-.633.79a1.125 1.125 0 0 1-1.45.31 12.035 12.035 0 0 1-5.59-5.59 1.125 1.125 0 0 1 .31-1.45l.79-.633a1.5 1.5 0 0 0 .499-1.52L6.213 3.852A1.125 1.125 0 0 0 5.122 3H3.75A1.5 1.5 0 0 0 2.25 4.5v2.25Z"/>
+      </svg>
+    </button>
   </div>
 
   <button id="toggleFooterBtn" class="fab-footer-btn" aria-label="Mostrar/Ocultar menu"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -1783,8 +1813,10 @@
       const ocultar = getTipoUsuario() === 'cliente';
       const navHistory = document.getElementById('nav-history');
       const navContacts = document.getElementById('nav-contacts');
+      const btnContactoVendedor = document.getElementById('btnContactoVendedor');
       if(navHistory) navHistory.style.display = ocultar ? 'none' : '';
       if(navContacts) navContacts.style.display = ocultar ? 'none' : '';
+      if(btnContactoVendedor) btnContactoVendedor.style.display = ocultar ? '' : 'none';
     }
 
     let _tipoResolvido = false;
@@ -1854,12 +1886,13 @@
     }
 
     function recSummaryCard(showValor) {
+      const bonus = bonusRecargaPorValor[Number(temp.valor)];
       return `
         <div class="rec-summary-card">
           <div class="rec-summary-icon">${recPhoneIconSvg.replace('currentColor','#fff')}</div>
           <div class="rec-summary-text">
             <span class="rec-summary-main">+244 ${temp.numero}</span>
-            <span class="rec-summary-sub">Recarga directa Movicel</span>
+            <span class="rec-summary-sub">Recarga directa Movicel${bonus ? ' · ' + bonus : ''}</span>
           </div>
           ${showValor ? `<div class="rec-summary-value">AKZ ${temp.valor}</div>` : ''}
         </div>`;
@@ -1878,7 +1911,7 @@
       clearErro();
       temp.valor = '';
       document.getElementById('subheader').classList.add('ad-mode');
-      const valoresRapidos = [200, 500, 850, 1000, 1500, 2000];
+      const valoresRapidos = [200, 500, 900, 1000, 1500, 2000];
       document.getElementById('content').innerHTML = `
         <div class="rec-page ad-mode" id="rec-page-root">
 
@@ -1904,15 +1937,7 @@
               ` : ''}
 
               <div class="rec-quick-section-label">⚡ Recarga Rápida</div>
-              <div class="rec-quick-values">
-                ${valoresRapidos.map(v => `
-                  <button type="button" class="rec-quick-val-btn" onclick="selectValorRapido(${v}, this)">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="rgba(255,255,255,0.80)"><path d="M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10H9V8M9,16H7A2,2 0 0,1 9,18V16M19,16V18A2,2 0 0,1 21,16H19M19,8H21A2,2 0 0,1 19,10V8M1,10H3V20H19V22H1V10Z"/></svg>
-                    <span class="rec-quick-val-amount">${v}</span>
-                    <span class="rec-quick-val-akz">AKZ</span>
-                  </button>
-                `).join('')}
-              </div>
+              <div class="rec-quick-values" id="rec-quick-values">${renderQuickValuesHtml(valoresRapidos)}</div>
             </div>
           </div>
 
@@ -2008,6 +2033,64 @@
       aguardarTipoEDecidirBotao();
     }
 
+    const valoresSemDesconto = [900];
+
+    function calcularPrecoComDesconto(valor, tipoUsuario) {
+      const v = Number(valor) || 0;
+      if (valoresSemDesconto.includes(v)) {
+        return { valor: v, desconto: 0, preco: v };
+      }
+      const tipo = tipoUsuario || getTipoUsuario();
+      let desconto = 0;
+      if (tipo === 'vendedor') {
+        if (v > 1000) {
+          desconto = v * 0.10;
+        } else if (v >= 600) {
+          desconto = v * 0.15;
+        } else if (v >= 200) {
+          desconto = v * 0.20;
+        }
+      } else {
+        if (v >= 1000) {
+          desconto = v * 0.10;
+        } else if (v >= 200) {
+          desconto = v * 0.22;
+        }
+      }
+      const preco = Math.max(0, v - desconto);
+      return { valor: v, desconto, preco };
+    }
+
+    const bonusRecargaPorValor = {
+      900: '+10 GB'
+    };
+
+    function renderQuickValuesHtml(valoresRapidos) {
+      const tipo = getTipoUsuario();
+      const temDesconto = tipo === 'cliente' || tipo === 'vendedor';
+      return valoresRapidos.map(v => {
+        const { desconto, preco } = calcularPrecoComDesconto(v, tipo);
+        const bonus = bonusRecargaPorValor[v];
+        return `
+          <button type="button" class="rec-quick-val-btn" onclick="selectValorRapido(${v}, this)">
+            ${bonus ? `<span class="rec-quick-val-bonus">${bonus}</span>` : ''}
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="rgba(255,255,255,0.80)"><path d="M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10H9V8M9,16H7A2,2 0 0,1 9,18V16M19,16V18A2,2 0 0,1 21,16H19M19,8H21A2,2 0 0,1 19,10V8M1,10H3V20H19V22H1V10Z"/></svg>
+            <span class="rec-quick-val-amount">${v}<span class="rec-quick-val-akz"> AKZ</span></span>
+            ${temDesconto && desconto > 0 ? `
+              <span class="rec-quick-val-pay">Paga <b>${preco.toLocaleString('pt-PT')}</b> Kz</span>
+            ` : ''}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function atualizarQuickValuesCards() {
+      const wrap = document.getElementById('rec-quick-values');
+      if (!wrap) return;
+      const valoresRapidos = [200, 500, 900, 1000, 1500, 2000];
+      wrap.innerHTML = renderQuickValuesHtml(valoresRapidos);
+    }
+
     function selectValorRapido(val, btnEl) {
 
       if (btnEl) {
@@ -2049,6 +2132,7 @@
         const banner = document.getElementById('rec-valor-banner');
         if (banner) {
           if (temp.valor) {
+            const bonus = bonusRecargaPorValor[Number(temp.valor)];
             banner.innerHTML = `
               <div class="rec-valor-selected-banner">
                 <div class="rvs-icon">
@@ -2056,7 +2140,7 @@
                 </div>
                 <div class="rvs-text">
                   <span class="rvs-label">Valor selecionado</span>
-                  <span class="rvs-val">AKZ ${temp.valor}</span>
+                  <span class="rvs-val">AKZ ${temp.valor}${bonus ? ` <small style="opacity:.85;font-weight:700;">(${bonus})</small>` : ''}</span>
                 </div>
                 <button type="button" class="rvs-change" onclick="renderTela1()">Alterar</button>
               </div>`;
@@ -2099,9 +2183,16 @@
 
           <div class="rec-question">Qual o valor da recarga?</div>
           <div class="fis-value-row">
-            ${valoresRapidos.map(val => `
-              <button type="button" class="fis-value-btn ${String(temp.valor)===String(val) ? 'selected' : ''}" data-val="${val}" onclick="setValorRecarga(${val}, this)">AKZ ${val}</button>
-            `).join('')}
+            ${valoresRapidos.map(val => {
+              const tipo = getTipoUsuario();
+              const temDesconto = tipo === 'cliente' || tipo === 'vendedor';
+              const { desconto, preco } = calcularPrecoComDesconto(val, tipo);
+              return `
+              <button type="button" class="fis-value-btn ${String(temp.valor)===String(val) ? 'selected' : ''}" data-val="${val}" onclick="setValorRecarga(${val}, this)">
+                AKZ ${val}
+                ${temDesconto && desconto > 0 ? `<span class="fis-value-btn-pay">Paga ${preco.toLocaleString('pt-PT')}</span>` : ''}
+              </button>
+            `}).join('')}
           </div>
 
           <form onsubmit="event.preventDefault(); nextTela2();" autocomplete="off">
@@ -2542,9 +2633,12 @@
           }
           if(changed) {
             if(typeof aplicarVisibilidadeFooterPorTipo === 'function') aplicarVisibilidadeFooterPorTipo();
-            if(document.getElementById('subheader') && document.getElementById('subheader').innerText === 'Configurações') {
+            const subheaderText = document.getElementById('subheader') && document.getElementById('subheader').innerText;
+            if(subheaderText === 'Configurações') {
               renderSettings();
             }
+            atualizarQuickValuesCards();
+            aplicarVisibilidadeBotaoCarregarAgora();
           }
         }, (err) => {
           console.error('Erro ao sincronizar perfil com o servidor:', err);
@@ -2702,6 +2796,23 @@
 
     function openSuporteModal() {
       openSettingsModal(ICON_CHAT, 'Suporte', `
+        <p>Dúvidas ou sugestões? Fale diretamente com a nossa equipa.</p>
+        <p class="settings-hint">Atendimento todos os dias, das 6h às 23h.</p>
+        <div class="settings-btn-group">
+          <a href="https://wa.me/244955597211" target="_blank" rel="noopener" class="settings-btn settings-btn-whatsapp">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.84.5 3.56 1.36 5.03L2 22l5.25-1.38a9.86 9.86 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.79 14.07c-.24.68-1.41 1.32-1.93 1.39-.5.07-1.13.1-1.81-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.15-4.94-4.34-.14-.19-1.18-1.57-1.18-3 0-1.43.75-2.13 1.02-2.42.27-.29.59-.36.79-.36.2 0 .39.002.56.01.18.008.42-.07.65.5.24.59.81 2.03.88 2.18.07.15.12.33.02.53-.1.2-.15.32-.3.49-.15.17-.31.38-.45.51-.15.14-.3.29-.13.58.18.29.8 1.32 1.71 2.13 1.18 1.04 2.17 1.37 2.48 1.52.31.15.49.13.67-.08.18-.21.78-.91.99-1.22.21-.31.42-.26.69-.16.27.1 1.72.81 2.01.96.29.15.49.22.56.34.07.13.07.74-.17 1.41Z"/></svg>
+            Falar no WhatsApp
+          </a>
+          <a href="https://www.facebook.com/profile.php?id=61578897033347" target="_blank" rel="noopener" class="settings-btn settings-btn-outline" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+            <span style="width:18px;height:18px;display:inline-flex;flex-shrink:0;">${ICON_FACEBOOK}</span> Falar no Facebook
+          </a>
+          <a href="tel:932535389" class="settings-btn settings-btn-outline">Falar com o suporte</a>
+        </div>
+      `);
+    }
+
+    function openContactoVendedorModal() {
+      openSettingsModal(ICON_PHONE, 'Apoio ao Cliente', `
         <p>Dúvidas ou sugestões? Fale diretamente com a nossa equipa.</p>
         <p class="settings-hint">Atendimento todos os dias, das 6h às 23h.</p>
         <div class="settings-btn-group">
@@ -2974,6 +3085,7 @@
     document.getElementById('nav-contacts').addEventListener('click', renderContacts);
     document.getElementById('nav-settings').addEventListener('click', renderSettings);
     document.getElementById('btnPedidosRecebidos').addEventListener('click', renderPedidosRecebidos);
+    document.getElementById('btnContactoVendedor').addEventListener('click', openContactoVendedorModal);
 
     let unsubscribePedidos = null;
 
