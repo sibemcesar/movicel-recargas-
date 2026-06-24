@@ -1250,6 +1250,58 @@
     background:none; border:none; color:#c20021; font-weight:800; cursor:pointer;
     font-size:1em; padding:0 2px;
   }
+  .header-status-pill {
+    display:flex; align-items:center; gap:5px;
+    background:rgba(255,255,255,0.14); border-radius:20px;
+    padding:4px 10px 4px 7px; font-size:0.72em; font-weight:700;
+    color:#fff; letter-spacing:.02em; white-space:nowrap; flex-shrink:0;
+  }
+  .admin-status-dot {
+    width:9px; height:9px; border-radius:50%; flex-shrink:0; display:inline-block;
+  }
+  .admin-status-dot.online  { background:#2ecc71; animation:statusPulse 2s infinite; }
+  .admin-status-dot.offline { background:#e74c3c; }
+  @keyframes statusPulse {
+    0%,100%{ box-shadow:0 0 0 2px rgba(46,204,113,0.3); }
+    50%    { box-shadow:0 0 0 5px rgba(46,204,113,0); }
+  }
+  .offline-modal-overlay {
+    position:fixed; inset:0; width:100vw; height:100vh;
+    background:rgba(20,18,26,0.60); z-index:10001;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    box-sizing:border-box; animation:successFadeBg .22s ease;
+  }
+  .offline-modal-card {
+    background:#fff; border-radius:22px; padding:30px 22px 24px 22px;
+    width:100%; max-width:330px; text-align:center;
+    box-shadow:0 14px 40px rgba(0,0,0,0.30); box-sizing:border-box;
+    animation:successPop .4s cubic-bezier(.21,1.13,.49,1.33);
+  }
+  .offline-modal-icon-wrap {
+    width:80px; height:80px; border-radius:50%; background:#fff3e0;
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 18px auto;
+  }
+  .offline-modal-icon-wrap svg { width:38px; height:38px; color:#e67e22; }
+  .offline-modal-title { font-size:1.15em; font-weight:800; color:#2c2c3a; margin-bottom:6px; }
+  .offline-modal-sub { font-size:0.87em; color:#666; line-height:1.5; margin-bottom:20px; }
+  .offline-modal-sub b { color:#c20021; }
+  .offline-urgency-btn {
+    display:flex; align-items:center; justify-content:center; gap:9px;
+    width:100%; height:50px; border:none; border-radius:13px;
+    background:linear-gradient(135deg,#e0102f 0%,#a4001c 100%);
+    color:#fff; font-size:1em; font-weight:800;
+    box-shadow:0 4px 14px rgba(194,0,33,0.30); cursor:pointer;
+    transition:transform .15s; margin-bottom:10px;
+  }
+  .offline-urgency-btn:active { transform:scale(.97); }
+  .offline-urgency-btn svg { width:19px; height:19px; flex-shrink:0; }
+  .offline-close-btn {
+    width:100%; height:44px; border:1.6px solid #e0dde5;
+    border-radius:12px; background:#fff; color:#999;
+    font-size:0.95em; font-weight:700; cursor:pointer;
+  }
+  .offline-close-btn:active { background:#f5f4f7; }
   </style>
 </head>
 <body>
@@ -1433,6 +1485,7 @@
   </div>
 
   <div class="header-actions">
+    <div class="header-status-pill" id="adminStatusPill" style="display:none;"><span class="admin-status-dot" id="adminStatusDot"></span><span id="adminStatusLabel"></span></div>
     <button id="btnNotificacoes" class="header-icon-btn" aria-label="Notificações" title="Notificações">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.85 23.85 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
@@ -2281,6 +2334,11 @@
 
       const numero = temp.numero;
       const valor = temp.valor;
+
+      if(window.__adminOnline === false) {
+        showOfflineModal({ numero, valor });
+        return;
+      }
 
       document.getElementById('loading').style.display = '';
 
@@ -3565,6 +3623,30 @@
 
 
 
+    function showOfflineModal({ numero, valor }) {
+      const ex = document.getElementById('offlineModal');
+      if(ex) ex.remove();
+      const m = document.createElement('div');
+      m.id = 'offlineModal';
+      m.className = 'offline-modal-overlay';
+      m.innerHTML = `<div class="offline-modal-card">
+        <div class="offline-modal-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+          </svg>
+        </div>
+        <div class="offline-modal-title">Equipa indisponível</div>
+        <div class="offline-modal-sub">Neste momento a nossa equipa está <b>offline</b> e não consegue processar a sua recarga.<br><br>Horário: <b>6h às 23h</b>. Tente mais tarde ou avise-nos da urgência.</div>
+        <button class="offline-urgency-btn" onclick="document.getElementById('offlineModal').remove();window.location.href='tel:*611*997299021%23';">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.47 11.47 0 0 0 3.58.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1C10.18 21 3 13.82 3 5a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.47 11.47 0 0 0 .57 3.58 1 1 0 0 1-.25 1.02l-2.2 2.19Z"/></svg>
+          Avisar urgência da minha recarga
+        </button>
+        <button class="offline-close-btn" onclick="document.getElementById('offlineModal').remove();">Fechar</button>
+      </div>`;
+      document.body.appendChild(m);
+      m.addEventListener('click', e => { if(e.target === m) m.remove(); });
+    }
+
     function showSuccessModal({ numero, valor }) {
       const existing = document.getElementById('successModal');
       if(existing) existing.remove();
@@ -4028,6 +4110,41 @@ function toggleAddContactForm() {
     const fsDb = getFirestore(fbApp);
     window.__movicelDb = fsDb;
     window.__movicelFirestore = { collection, addDoc, deleteDoc, updateDoc, doc, setDoc, query, where, onSnapshot, getDocs, serverTimestamp };
+
+    // Realtime DB isolado
+    window.__adminOnline = null;
+    (async () => {
+      try {
+        const {
+          getDatabase,
+          ref      : rtRef,
+          onValue  : rtOnValue,
+          set      : rtSet,
+          onDisconnect: rtOnDisconnect
+        } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js");
+        const rtDb = getDatabase(fbApp);
+        window.__rtDb = rtDb; window.__rtRef = rtRef;
+        window.__rtSet = rtSet; window.__rtOnDisconnect = rtOnDisconnect;
+        const IDS = ['998377568','997299021'];
+        const pres = {};
+        function update() {
+          const on = IDS.some(id => pres[id] === true);
+          window.__adminOnline = on;
+          const pill = document.getElementById('adminStatusPill');
+          const dot  = document.getElementById('adminStatusDot');
+          const lbl  = document.getElementById('adminStatusLabel');
+          if(pill) pill.style.display = 'flex';
+          if(dot)  dot.className = 'admin-status-dot ' + (on ? 'online' : 'offline');
+          if(lbl)  lbl.textContent = on ? 'Equipa online' : 'Equipa offline';
+        }
+        IDS.forEach(id => {
+          rtOnValue(rtRef(rtDb, 'adminPresenca/' + id + '/online'), snap => {
+            pres[id] = snap.val() === true; update();
+          }, () => { pres[id] = false; update(); });
+        });
+      } catch(e) { console.warn('Realtime DB indisponivel:', e); }
+    })();
+
   } catch (initErr) {
     console.error('Erro ao iniciar Firebase:', initErr);
     if (msgEl) {
@@ -4438,6 +4555,20 @@ function toggleAddContactForm() {
       if (typeof window.attachContactsSync === 'function') window.attachContactsSync();
       if (typeof window.attachProfileSync === 'function') window.attachProfileSync();
       if (typeof window.attachNotifSync === 'function') window.attachNotifSync();
+      // Presenca admin (nao bloqueia nada)
+      const _ADMP = ['998377568@gmail.com','997299021@gmail.com'];
+      if (user.email && _ADMP.includes(user.email)) {
+        setTimeout(() => {
+          try {
+            const id = user.email.split('@')[0];
+            if(window.__rtDb && window.__rtRef && window.__rtSet && window.__rtOnDisconnect) {
+              const pr = window.__rtRef(window.__rtDb, 'adminPresenca/' + id + '/online');
+              window.__rtSet(pr, true).catch(()=>{});
+              window.__rtOnDisconnect(pr).set(false);
+            }
+          } catch(e) {}
+        }, 500);
+      }
       if (!user.displayName || !user.displayName.trim()) {
         nameScreen.style.display = 'flex';
         appRoot.style.display = 'none';
