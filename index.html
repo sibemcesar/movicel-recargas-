@@ -4104,15 +4104,19 @@ function toggleAddContactForm() {
           ref      : rtRef,
           onValue  : rtOnValue,
           set      : rtSet,
-          onDisconnect: rtOnDisconnect
+          onDisconnect: rtOnDisconnect,
+          serverTimestamp: rtServerTimestamp
         } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js");
         const rtDb = getDatabase(fbApp);
         window.__rtDb = rtDb; window.__rtRef = rtRef;
         window.__rtSet = rtSet; window.__rtOnDisconnect = rtOnDisconnect;
         const IDS = ['998377568','997299021'];
+        const HEARTBEAT_TTL = 12000;
         const pres = {};
+        const lastSeen = {};
         function update() {
-          const on = IDS.some(id => pres[id] === true);
+          const now = Date.now();
+          const on = IDS.some(id => pres[id] === true && (now - (lastSeen[id] || 0)) < HEARTBEAT_TTL);
           window.__adminOnline = on;
           const pill = document.getElementById('adminStatusPill');
           const dot  = document.getElementById('adminStatusDot');
@@ -4122,10 +4126,19 @@ function toggleAddContactForm() {
           if(lbl)  lbl.textContent = on ? 'Equipa online' : 'Equipa offline';
         }
         IDS.forEach(id => {
-          rtOnValue(rtRef(rtDb, 'adminPresenca/' + id + '/online'), snap => {
-            pres[id] = snap.val() === true; update();
-          }, () => { pres[id] = false; update(); });
+          rtOnValue(rtRef(rtDb, 'adminPresenca/' + id), snap => {
+            const val = snap.val();
+            if (val && val.online === true) {
+              pres[id] = true;
+              lastSeen[id] = val.ts || Date.now();
+            } else {
+              pres[id] = false;
+              lastSeen[id] = 0;
+            }
+            update();
+          }, () => { pres[id] = false; lastSeen[id] = 0; update(); });
         });
+        setInterval(update, 5000);
       } catch(e) { console.warn('Realtime DB indisponivel:', e); }
     })();
 
@@ -4545,9 +4558,11 @@ function toggleAddContactForm() {
           try {
             const id = user.email.split('@')[0];
             if(window.__rtDb && window.__rtRef && window.__rtSet && window.__rtOnDisconnect) {
-              const pr = window.__rtRef(window.__rtDb, 'adminPresenca/' + id + '/online');
-              window.__rtSet(pr, true).catch(()=>{});
-              window.__rtOnDisconnect(pr).set(false);
+              const pr = window.__rtRef(window.__rtDb, 'adminPresenca/' + id);
+              const writePresenca = () => window.__rtSet(pr, { online: true, ts: Date.now() }).catch(()=>{});
+              writePresenca();
+              window.__adminHeartbeat = setInterval(writePresenca, 8000);
+              window.__rtOnDisconnect(window.__rtRef(window.__rtDb, 'adminPresenca/' + id + '/online')).set(false);
             }
           } catch(e) {}
         }, 500);
@@ -4576,6 +4591,7 @@ function toggleAddContactForm() {
       if (typeof window.detachContactsSync === 'function') window.detachContactsSync();
       if (typeof window.detachProfileSync === 'function') window.detachProfileSync();
       if (typeof window.detachNotifSync === 'function') window.detachNotifSync();
+      if (window.__adminHeartbeat) { clearInterval(window.__adminHeartbeat); window.__adminHeartbeat = null; }
       _historyCache = [];
       _contactsCache = [];
       _provinciaCache = '';
