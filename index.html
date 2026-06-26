@@ -3582,6 +3582,8 @@
         root.innerHTML = `<div class="precos-empty-row">Nenhum valor adicionado.</div>`;
         return;
       }
+      // Mantém sempre a ordem crescente de preços nos cards
+      lista.sort((a, b) => Number(a) - Number(b));
       root.innerHTML = lista.map((v, idx) => `
         <div class="precos-row">
           <input type="number" inputmode="numeric" class="precos-input" value="${v}"
@@ -3653,6 +3655,7 @@
     function precosEditarValor(chave, idx, val) {
       const n = Number(val) || 0;
       _precosEdit[chave][idx] = n;
+      renderPrecosListas();
     }
 
     function precosRemoverValor(chave, idx) {
@@ -3732,6 +3735,7 @@
         .then(() => {
           if (btn) { btn.disabled = false; btn.textContent = 'Guardar alterações'; }
           showToast('Preços atualizados com sucesso.');
+          renderTela1();
         })
         .catch(err => {
           console.error('Erro ao guardar preços:', err);
