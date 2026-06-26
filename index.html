@@ -2158,7 +2158,8 @@
     function renderQuickValuesHtml(valoresRapidos) {
       const tipo = getTipoUsuario();
       const temDesconto = tipo === 'cliente' || tipo === 'vendedor';
-      return valoresRapidos.map(v => {
+      const valoresOrdenados = [...valoresRapidos].sort((a, b) => Number(a) - Number(b));
+      return valoresOrdenados.map(v => {
         const { desconto, preco } = calcularPrecoComDesconto(v, tipo);
         const bonus = bonusRecargaPorValor[v];
         return `
@@ -2265,7 +2266,7 @@
       setSubheader('');
       setActiveFooter('nav-home');
       clearErro();
-      const valoresRapidos = getPrecosState().valoresTela2;
+      const valoresRapidos = [...getPrecosState().valoresTela2].sort((a, b) => Number(a) - Number(b));
       document.getElementById('content').innerHTML = `
         <div class="rec-page">
           ${recStepsHtml(2)}
