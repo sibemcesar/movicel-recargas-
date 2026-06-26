@@ -1163,6 +1163,21 @@
     background:#fff; box-shadow:0 -2px 10px rgba(0,0,0,0.08); z-index:50;
   }
 
+  /* ── Tela Admin: Utilizadores ── */
+  .util-card { cursor:pointer; transition:background .15s; }
+  .util-card:active { background:#fbe9ea; }
+  .util-tipo-badge {
+    font-size:0.68em; font-weight:800; padding:2px 8px; border-radius:20px; white-space:nowrap;
+  }
+  .util-tipo-cliente { background:#eaf3ff; color:#1d6fc2; }
+  .util-tipo-vendedor { background:#fff2e0; color:#c2750d; }
+  .util-tipo-indefinido { background:#f1f0f4; color:#999; }
+  .util-detail-row { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid #f3f1f5; font-size:0.88em; }
+  .util-detail-row:last-child { border-bottom:none; }
+  .util-detail-label { color:#999; font-weight:700; flex-shrink:0; }
+  .util-detail-value { color:#46455e; font-weight:700; text-align:right; word-break:break-word; }
+  .util-count-bar { font-size:0.78em; color:#999; font-weight:700; padding:0 2px 10px 2px; }
+
   @media (max-width: 690px) {
     .hist-page { width:96vw; max-width:99vw; }
   }
@@ -1490,6 +1505,11 @@
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3.75-9.75h5.25a2.25 2.25 0 0 1 0 4.5h-3a2.25 2.25 0 0 0 0 4.5h5.25M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0Z"/>
       </svg>
     </button>
+    <button id="btnUtilizadoresAdmin" class="header-icon-btn" aria-label="Utilizadores" title="Utilizadores" style="display:none;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>
+      </svg>
+    </button>
     <button id="btnContactoVendedor" class="header-icon-btn" aria-label="Apoio ao cliente" title="Apoio ao cliente" style="display:none;">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h1.5a1.5 1.5 0 0 0 1.5-1.5v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106a1.5 1.5 0 0 0-1.52.499l-.633.79a1.125 1.125 0 0 1-1.45.31 12.035 12.035 0 0 1-5.59-5.59 1.125 1.125 0 0 1 .31-1.45l.79-.633a1.5 1.5 0 0 0 .499-1.52L6.213 3.852A1.125 1.125 0 0 0 5.122 3H3.75A1.5 1.5 0 0 0 2.25 4.5v2.25Z"/>
@@ -1645,6 +1665,7 @@
 
     function renderNotificacoesPage() {
       detachPedidosListener();
+      detachUtilizadoresListener();
       clearErro();
       document.querySelectorAll('.footer-item').forEach(item => item.classList.remove('active'));
       setSubheader('Notificações');
@@ -1900,6 +1921,7 @@
 
     function setActiveFooter(activeId) {
       detachPedidosListener();
+      detachUtilizadoresListener();
       aplicarVisibilidadeFooterPorTipo();
       document.querySelectorAll('.footer-item').forEach(item => item.classList.remove('active'));
       document.getElementById(activeId).classList.add('active');
@@ -2973,6 +2995,7 @@
 
     function fazerLogout() {
       detachPedidosListener();
+      detachUtilizadoresListener();
       if(typeof window.__movicelSignOut === 'function') {
         window.__movicelSignOut().catch(err => {
           console.error('Erro ao terminar sessão:', err);
@@ -3177,6 +3200,7 @@
     document.getElementById('nav-settings').addEventListener('click', renderSettings);
     document.getElementById('btnPedidosRecebidos').addEventListener('click', renderPedidosRecebidos);
     document.getElementById('btnPrecosAdmin').addEventListener('click', renderPrecosAdmin);
+    document.getElementById('btnUtilizadoresAdmin').addEventListener('click', renderUtilizadoresAdmin);
     document.getElementById('btnContactoVendedor').addEventListener('click', openContactoVendedorModal);
 
     let unsubscribePedidos = null;
@@ -3319,6 +3343,7 @@
 
     function renderPedidosRecebidos() {
       detachPedidosListener();
+      detachUtilizadoresListener();
       clearErro();
       document.querySelectorAll('.footer-item').forEach(item => item.classList.remove('active'));
       setSubheader('Pedidos Recebidos');
@@ -3486,6 +3511,252 @@
     }
 
     // ══════════════════════════════════════════════════════════════════
+    // ADMIN: Utilizadores cadastrados (perfisUtilizador no Firestore)
+    // ══════════════════════════════════════════════════════════════════
+
+    let _utilizadoresAllCache = [];
+    let _utilizadoresCache = [];
+    let _utilFiltroNome = '';
+    let unsubscribeUtilizadores = null;
+
+    function detachUtilizadoresListener() {
+      if (typeof unsubscribeUtilizadores === 'function') {
+        unsubscribeUtilizadores();
+        unsubscribeUtilizadores = null;
+      }
+    }
+    window.detachUtilizadoresListener = detachUtilizadoresListener;
+
+    function utilTipoBadgeHtml(tipo) {
+      if (tipo === 'vendedor') return `<span class="util-tipo-badge util-tipo-vendedor">Vendedor</span>`;
+      if (tipo === 'cliente') return `<span class="util-tipo-badge util-tipo-cliente">Cliente</span>`;
+      return `<span class="util-tipo-badge util-tipo-indefinido">Sem tipo</span>`;
+    }
+
+    function renderUtilizadoresAdmin() {
+      detachPedidosListener();
+      detachUtilizadoresListener();
+      clearErro();
+      document.querySelectorAll('.footer-item').forEach(item => item.classList.remove('active'));
+      setSubheader('Utilizadores');
+
+      if (!isAdminUser()) {
+        document.getElementById('content').innerHTML = `
+          <div class="hist-empty">
+            <p>Acesso restrito.</p>
+          </div>`;
+        return;
+      }
+
+      _utilFiltroNome = '';
+
+      document.getElementById('content').innerHTML = `
+        <div class="hist-page" id="utilizadoresPageRoot">
+          <div class="pedido-filter-bar">
+            <div class="hist-search">
+              <svg viewBox="0 0 24 24" width="17" height="17"><path fill="#999" d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16a6.47 6.47 0 0 0 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+              <input type="text" id="utilFiltroNomeInput" placeholder="Pesquisar por nome ou número..." oninput="utilOnFiltroNome(this.value)">
+            </div>
+          </div>
+          <div class="util-count-bar" id="utilCountBar"></div>
+          <div id="utilizadoresListContainer">
+            <div class="hist-empty">
+              <div class="hist-empty-icon">
+                <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="#c20021" stroke-width="1.4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20Z"/>
+                </svg>
+              </div>
+              <p>A carregar utilizadores...</p>
+            </div>
+          </div>
+        </div>`;
+
+      const db = window.__movicelDb;
+      const fs = window.__movicelFirestore;
+
+      if (!db || !fs) {
+        const root = document.getElementById('utilizadoresListContainer');
+        if (root) root.innerHTML = `
+          <div class="hist-empty">
+            <p>Não foi possível ligar ao servidor.</p>
+            <span>Verifique a sua internet e tente novamente.</span>
+          </div>`;
+        return;
+      }
+
+      try {
+        const q = fs.query(fs.collection(db, 'perfisUtilizador'));
+        unsubscribeUtilizadores = fs.onSnapshot(q, (snapshot) => {
+          const utilizadores = snapshot.docs.map(d => ({ uid: d.id, ...d.data() }));
+          utilizadores.sort((a, b) => {
+            const ta = (a.atualizadoEm && a.atualizadoEm.toMillis) ? a.atualizadoEm.toMillis() : 0;
+            const tb = (b.atualizadoEm && b.atualizadoEm.toMillis) ? b.atualizadoEm.toMillis() : 0;
+            return tb - ta;
+          });
+          _utilizadoresAllCache = utilizadores;
+          renderUtilizadoresFiltered();
+        }, (err) => {
+          console.error('Erro ao carregar utilizadores:', err);
+          const root = document.getElementById('utilizadoresListContainer');
+          if (root) root.innerHTML = `
+            <div class="hist-empty">
+              <p>Erro ao carregar utilizadores.</p>
+              <span>Tente novamente mais tarde.</span>
+            </div>`;
+        });
+      } catch (err) {
+        console.error('Erro ao consultar utilizadores:', err);
+      }
+    }
+
+    function utilOnFiltroNome(val) {
+      _utilFiltroNome = val;
+      renderUtilizadoresFiltered();
+    }
+
+    function renderUtilizadoresFiltered() {
+      let filtered = _utilizadoresAllCache;
+      const q = _utilFiltroNome.trim().toLowerCase();
+      if (q) {
+        filtered = filtered.filter(u =>
+          (u.nome || '').toLowerCase().includes(q) ||
+          (u.numero || '').toLowerCase().includes(q)
+        );
+      }
+      renderUtilizadoresList(filtered);
+    }
+
+    function renderUtilizadoresList(utilizadores) {
+      const root = document.getElementById('utilizadoresListContainer');
+      const countBar = document.getElementById('utilCountBar');
+      if (!root) return;
+
+      _utilizadoresCache = utilizadores;
+
+      if (countBar) {
+        const total = _utilizadoresAllCache.length;
+        countBar.textContent = `${total} utilizador${total === 1 ? '' : 'es'} cadastrado${total === 1 ? '' : 's'}`;
+      }
+
+      if (utilizadores.length === 0) {
+        const filtrando = !!_utilFiltroNome.trim();
+        root.innerHTML = filtrando ? `
+          <div class="hist-empty hist-empty-filtered">
+            <span>Nenhum resultado para esta pesquisa.</span>
+          </div>` : `
+          <div class="hist-empty">
+            <div class="hist-empty-icon">
+              <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="#c20021" stroke-width="1.4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20Z"/>
+              </svg>
+            </div>
+            <p>Nenhum utilizador cadastrado ainda.</p>
+            <span>Os utilizadores registados vão aparecer aqui.</span>
+          </div>`;
+        return;
+      }
+
+      let html = '';
+      utilizadores.forEach((u, idx) => {
+        html += `
+          <div class="hist-card-wrap">
+            <div class="hist-card util-card" onclick="showUtilizadorDetailModal(${idx})">
+              <div class="hist-card-avatar">${getAvatarInnerHtml()}</div>
+              <div class="hist-card-info">
+                <strong>${histEscape(u.nome || 'Sem nome')}</strong>
+                <span class="hist-card-meta">${u.numero ? '+244 ' + histEscape(u.numero) : 'Sem número'}</span>
+              </div>
+              <div class="hist-card-right">
+                ${utilTipoBadgeHtml(u.tipo)}
+                <span class="hist-card-name">${histEscape(u.provincia || '—')}</span>
+              </div>
+            </div>
+          </div>`;
+      });
+      root.innerHTML = html;
+    }
+
+    function showUtilizadorDetailModal(idx) {
+      const u = _utilizadoresCache[idx];
+      if (!u) return;
+
+      const existing = document.getElementById('utilizadorDetailModal');
+      if (existing) existing.remove();
+
+      const d = (u.atualizadoEm && u.atualizadoEm.toDate) ? u.atualizadoEm.toDate() : null;
+      const dataAtualizado = d ? d.toLocaleString('pt-PT', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      }) : '—';
+
+      const overlay = document.createElement('div');
+      overlay.id = 'utilizadorDetailModal';
+      overlay.className = 'pedido-detail-overlay';
+      overlay.innerHTML = `
+        <div class="pedido-detail-sheet" id="utilizadorDetailSheet">
+          <div class="pedido-detail-handle"></div>
+          <div class="pedido-detail-header">
+            <span class="pedido-detail-title">Perfil do Utilizador</span>
+            <button class="pedido-detail-close" onclick="closeUtilizadorDetailModal()" aria-label="Fechar">×</button>
+          </div>
+
+          <div class="pedido-detail-rows">
+            <div class="pedido-detail-row">
+              <span class="pedido-detail-row-label">Nome</span>
+              <span class="pedido-detail-row-val">${histEscape(u.nome || '—')}</span>
+            </div>
+            <div class="pedido-detail-row">
+              <span class="pedido-detail-row-label">Número</span>
+              <span class="pedido-detail-row-val">
+                ${u.numero ? '+244 ' + histEscape(u.numero) : '—'}
+                ${u.numero ? `
+                <button class="pedido-copy-btn" onclick="copiarNumeroPedido('${histEscape(u.numero)}')" title="Copiar número">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                  </svg>
+                  Copiar
+                </button>` : ''}
+              </span>
+            </div>
+            <div class="pedido-detail-row">
+              <span class="pedido-detail-row-label">Tipo de conta</span>
+              <span class="pedido-detail-row-val">${getTipoUsuarioLabel(u.tipo)}</span>
+            </div>
+            <div class="pedido-detail-row">
+              <span class="pedido-detail-row-label">Província</span>
+              <span class="pedido-detail-row-val">${histEscape(u.provincia || '—')}</span>
+            </div>
+            <div class="pedido-detail-row">
+              <span class="pedido-detail-row-label">UID</span>
+              <span class="pedido-detail-row-val" style="font-size:0.78em; word-break:break-all;">${histEscape(u.uid || '—')}</span>
+            </div>
+            <div class="pedido-detail-row">
+              <span class="pedido-detail-row-label">Última atualização</span>
+              <span class="pedido-detail-row-val">${histEscape(dataAtualizado)}</span>
+            </div>
+          </div>
+
+          <button class="pedido-detail-close-btn" onclick="closeUtilizadorDetailModal()">Fechar</button>
+        </div>`;
+
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closeUtilizadorDetailModal();
+      });
+    }
+
+    function closeUtilizadorDetailModal() {
+      const modal = document.getElementById('utilizadorDetailModal');
+      if (modal) {
+        modal.style.animation = 'successFadeBg .18s ease reverse forwards';
+        const sheet = document.getElementById('utilizadorDetailSheet');
+        if (sheet) sheet.style.animation = 'sheetSlideUp .2s ease reverse forwards';
+        setTimeout(() => modal.remove(), 200);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════════
     // ADMIN: Gestão de Preços (config/precos no Firestore)
     // ══════════════════════════════════════════════════════════════════
 
@@ -3493,6 +3764,7 @@
 
     function renderPrecosAdmin() {
       detachPedidosListener();
+      detachUtilizadoresListener();
       clearErro();
       document.querySelectorAll('.footer-item').forEach(item => item.classList.remove('active'));
       setSubheader('Preços');
@@ -3993,6 +4265,7 @@ function getTotalRecargas() {
 
 function renderDashboard() {
   detachPedidosListener();
+  detachUtilizadoresListener();
   clearErro();
   document.querySelectorAll('.footer-item').forEach(item => item.classList.remove('active'));
   setSubheader('Dashboard de Vendas');
@@ -4824,6 +5097,9 @@ function toggleAddContactForm() {
       // Mostra o botão de Preços apenas para administradores
       const btnPrecos = document.getElementById('btnPrecosAdmin');
       if (btnPrecos) btnPrecos.style.display = (typeof isAdminUser === 'function' && isAdminUser()) ? '' : 'none';
+      // Mostra o botão de Utilizadores apenas para administradores
+      const btnUtilizadores = document.getElementById('btnUtilizadoresAdmin');
+      if (btnUtilizadores) btnUtilizadores.style.display = (typeof isAdminUser === 'function' && isAdminUser()) ? '' : 'none';
       if (!user.displayName || !user.displayName.trim()) {
         nameScreen.style.display = 'flex';
         appRoot.style.display = 'none';
@@ -4845,7 +5121,10 @@ function toggleAddContactForm() {
       window.__currentUser = null;
       const btnPrecosOff = document.getElementById('btnPrecosAdmin');
       if (btnPrecosOff) btnPrecosOff.style.display = 'none';
+      const btnUtilizadoresOff = document.getElementById('btnUtilizadoresAdmin');
+      if (btnUtilizadoresOff) btnUtilizadoresOff.style.display = 'none';
       if (typeof window.detachPedidosListener === 'function') window.detachPedidosListener();
+      if (typeof window.detachUtilizadoresListener === 'function') window.detachUtilizadoresListener();
       if (typeof window.detachHistorySync === 'function') window.detachHistorySync();
       if (typeof window.detachContactsSync === 'function') window.detachContactsSync();
       if (typeof window.detachProfileSync === 'function') window.detachProfileSync();
