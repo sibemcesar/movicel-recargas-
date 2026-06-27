@@ -165,6 +165,22 @@
 .notif-item-title { font-size:0.93em; font-weight:700; color:#46455e; margin-bottom:2px; }
 .notif-item-desc { font-size:0.85em; color:#888; line-height:1.35; }
 .notif-item-time { font-size:0.74em; color:#bbb; margin-top:4px; }
+.notif-item-del {
+  flex-shrink:0; align-self:center;
+  width:30px; height:30px; border-radius:8px; border:none;
+  background:transparent; color:#c0392b; opacity:.6;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.notif-item-del:active { opacity:1; background:#fbe9ea; }
+.notif-item-del svg { width:16px; height:16px; }
+.notif-tabs {
+  display:flex; gap:6px; padding:0 2px 10px 2px;
+}
+.notif-tab-btn {
+  flex:1; padding:9px 0; border-radius:9px; border:1.5px solid #eee;
+  background:#fafafa; color:#888; font-size:0.85em; font-weight:700; cursor:pointer;
+}
+.notif-tab-btn.active { background:#c20021; border-color:#c20021; color:#fff; }
     .subheader {
       text-align:center; font-size:1.02em; color:#c20021;
       font-weight:600; background:none; margin:10px 0 0 0; min-height:21px;
@@ -1700,6 +1716,8 @@
       return `há ${d} d`;
     }
 
+    let notifTabAtual = 'recebidas';
+
     function renderNotificacoesPage() {
       detachPedidosListener();
       detachUtilizadoresListener();
@@ -1708,9 +1726,16 @@
       setSubheader('Notificações');
 
       const admin = (typeof isAdminUser === 'function' && isAdminUser());
+      notifTabAtual = 'recebidas';
       document.getElementById('content').innerHTML = `
         <div class="hist-page" id="notifPageRoot">
-          <div class="notif-action-bar">
+          ${admin ? `
+          <div class="notif-tabs">
+            <button class="notif-tab-btn active" id="notifTabRecebidas" onclick="trocarNotifTab('recebidas')">Recebidas</button>
+            <button class="notif-tab-btn" id="notifTabEnviadas" onclick="trocarNotifTab('enviadas')">Enviadas por mim</button>
+          </div>
+          ` : ''}
+          <div class="notif-action-bar" id="notifActionBar">
             ${admin ? `<button class="notif-action-link" onclick="openEnviarNotificacaoModal()">Enviar</button>` : ''}
             <button class="notif-action-link" id="btnLimparNotificacoes" onclick="limparNotificacoes()">Limpar tudo</button>
           </div>
@@ -1721,6 +1746,29 @@
 
       const idsVisiveis = getNotificacoes().map(n => n.id);
       setTimeout(() => marcarComoLidas(idsVisiveis), 600);
+    }
+
+    function trocarNotifTab(tab) {
+      notifTabAtual = tab;
+      const btnR = document.getElementById('notifTabRecebidas');
+      const btnE = document.getElementById('notifTabEnviadas');
+      if (btnR) btnR.classList.toggle('active', tab === 'recebidas');
+      if (btnE) btnE.classList.toggle('active', tab === 'enviadas');
+
+      const actionBar = document.getElementById('notifActionBar');
+      if (actionBar) {
+        actionBar.innerHTML = tab === 'enviadas'
+          ? `<button class="notif-action-link" onclick="openEnviarNotificacaoModal()">Enviar</button>
+             <button class="notif-action-link" onclick="abrirModalExcluirTodasEnviadas()">Excluir todas as enviadas</button>`
+          : `<button class="notif-action-link" onclick="openEnviarNotificacaoModal()">Enviar</button>
+             <button class="notif-action-link" id="btnLimparNotificacoes" onclick="limparNotificacoes()">Limpar tudo</button>`;
+      }
+
+      if (tab === 'enviadas') {
+        renderNotificacoesEnviadas();
+      } else {
+        renderNotificacoes();
+      }
     }
 
     function renderNotificacoes() {
@@ -1764,6 +1812,213 @@
       saveNotificacoes([]);
       renderNotificacoes();
       atualizarBadgeNotificacoes();
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // ADMIN: Ver e excluir notificações enviadas (Firestore)
+    // ══════════════════════════════════════════════════════════════════
+    let _notifEnviadasCache = [];
+
+    async function renderNotificacoesEnviadas() {
+      const body = document.getElementById('notifListContainer');
+      const btnClear = document.getElementById('btnLimparNotificacoes');
+      if (btnClear) btnClear.style.display = 'none';
+      if (!body) return;
+
+      body.innerHTML = `<div class="hist-empty"><p>A carregar...</p></div>`;
+
+      const db = window.__movicelDb;
+      const fs = window.__movicelFirestore;
+      const user = window.__currentUser;
+      if (!db || !fs || !user) {
+        body.innerHTML = `<div class="hist-empty"><p>Sem ligação ao servidor.</p></div>`;
+        return;
+      }
+
+      try {
+        const q = fs.query(fs.collection(db, 'notificacoesAdmin'), fs.where('criadoPor', '==', user.email || user.uid));
+        const snap = await fs.getDocs(q);
+        const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        lista.sort((a, b) => {
+          const ta = (a.criadoEm && a.criadoEm.toMillis) ? a.criadoEm.toMillis() : 0;
+          const tb = (b.criadoEm && b.criadoEm.toMillis) ? b.criadoEm.toMillis() : 0;
+          return tb - ta;
+        });
+        _notifEnviadasCache = lista;
+
+        if (lista.length === 0) {
+          body.innerHTML = `
+            <div class="hist-empty">
+              <div class="hist-empty-icon">
+                <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="#c20021" stroke-width="1.4">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.85 23.85 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+                </svg>
+              </div>
+              <p>Sem notificações enviadas</p>
+              <span>As notificações que enviar vão aparecer aqui.</span>
+            </div>`;
+          return;
+        }
+
+        body.innerHTML = lista.map(n => `
+          <div class="notif-item">
+            <div class="notif-item-icon">${notifIconSvg(n.tipo)}</div>
+            <div class="notif-item-content">
+              <div class="notif-item-title">${histEscape(n.titulo || '')}</div>
+              <div class="notif-item-desc">${histEscape(n.descricao || '')}</div>
+              <div class="notif-item-time">
+                ${n.criadoEm && n.criadoEm.toMillis ? formatarTempoNotif(n.criadoEm.toMillis()) : ''}
+                · ${n.destino === 'todos' ? 'Todos os utilizadores' : 'Utilizador específico'}
+              </div>
+            </div>
+            <button class="notif-item-del" onclick="abrirModalExcluirNotificacao('${histEscape(n.id)}')" aria-label="Excluir notificação">
+              ${ICON_TRASH}
+            </button>
+          </div>`).join('');
+      } catch (err) {
+        console.error('Erro ao carregar notificações enviadas:', err);
+        body.innerHTML = `<div class="hist-empty"><p>Erro ao carregar notificações.</p></div>`;
+      }
+    }
+
+    let _notifExcluirTimer = null;
+
+    function abrirModalExcluirNotificacao(notifId) {
+      const item = _notifEnviadasCache.find(n => n.id === notifId);
+      const titulo = item ? item.titulo : 'esta notificação';
+
+      const existing = document.getElementById('notifExcluirModal');
+      if (existing) existing.remove();
+      if (_notifExcluirTimer) { clearInterval(_notifExcluirTimer); _notifExcluirTimer = null; }
+
+      const overlay = document.createElement('div');
+      overlay.id = 'notifExcluirModal';
+      overlay.className = 'util-delete-overlay';
+      overlay.innerHTML = `
+        <div class="util-delete-box">
+          <div class="util-delete-icon">${ICON_TRASH}</div>
+          <p class="util-delete-title">Excluir notificação?</p>
+          <p class="util-delete-text">
+            Vai remover <b>${histEscape(titulo)}</b> do servidor para todos os destinatários.
+            <br><b>Esta ação não pode ser desfeita.</b>
+          </p>
+          <div class="util-delete-actions">
+            <button class="util-delete-cancel" onclick="closeNotifExcluirModal()">Cancelar</button>
+            <button class="util-delete-confirm" id="notifExcluirBtn" disabled onclick="confirmarExclusaoNotificacao('${histEscape(notifId)}')">
+              Eliminar (<span class="udc-count">5</span>)
+            </button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closeNotifExcluirModal();
+      });
+
+      _notifExcluirTimer = iniciarContagemBotaoExcluir('notifExcluirBtn', 'Eliminar');
+    }
+
+    function closeNotifExcluirModal() {
+      if (_notifExcluirTimer) { clearInterval(_notifExcluirTimer); _notifExcluirTimer = null; }
+      const modal = document.getElementById('notifExcluirModal');
+      if (modal) modal.remove();
+    }
+
+    async function confirmarExclusaoNotificacao(notifId) {
+      const btn = document.getElementById('notifExcluirBtn');
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      btn.classList.remove('is-ready');
+      btn.textContent = 'A excluir...';
+
+      const db = window.__movicelDb;
+      const fs = window.__movicelFirestore;
+      if (!db || !fs) {
+        showToast('Sem ligação ao servidor.');
+        closeNotifExcluirModal();
+        return;
+      }
+
+      try {
+        await fs.deleteDoc(fs.doc(db, 'notificacoesAdmin', notifId));
+        closeNotifExcluirModal();
+        showToast('Notificação excluída.');
+        renderNotificacoesEnviadas();
+      } catch (err) {
+        console.error('Erro ao excluir notificação:', err);
+        showToast('Erro ao excluir a notificação.');
+        closeNotifExcluirModal();
+      }
+    }
+
+    function abrirModalExcluirTodasEnviadas() {
+      if (_notifEnviadasCache.length === 0) { showToast('Não há notificações enviadas.'); return; }
+
+      const existing = document.getElementById('notifExcluirTodasModal');
+      if (existing) existing.remove();
+      if (_notifExcluirTimer) { clearInterval(_notifExcluirTimer); _notifExcluirTimer = null; }
+
+      const overlay = document.createElement('div');
+      overlay.id = 'notifExcluirTodasModal';
+      overlay.className = 'util-delete-overlay';
+      overlay.innerHTML = `
+        <div class="util-delete-box">
+          <div class="util-delete-icon">${ICON_TRASH}</div>
+          <p class="util-delete-title">Excluir todas as enviadas?</p>
+          <p class="util-delete-text">
+            Vai remover as <b>${_notifEnviadasCache.length}</b> notificações que enviou do servidor, para todos os destinatários.
+            <br><b>Esta ação não pode ser desfeita.</b>
+          </p>
+          <div class="util-delete-actions">
+            <button class="util-delete-cancel" onclick="closeNotifExcluirTodasModal()">Cancelar</button>
+            <button class="util-delete-confirm" id="notifExcluirTodasBtn" disabled onclick="confirmarExclusaoTodasEnviadas()">
+              Eliminar (<span class="udc-count">5</span>)
+            </button>
+          </div>
+        </div>`;
+      document.body.appendChild(overlay);
+
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) closeNotifExcluirTodasModal();
+      });
+
+      _notifExcluirTimer = iniciarContagemBotaoExcluir('notifExcluirTodasBtn', 'Eliminar todas');
+    }
+
+    function closeNotifExcluirTodasModal() {
+      if (_notifExcluirTimer) { clearInterval(_notifExcluirTimer); _notifExcluirTimer = null; }
+      const modal = document.getElementById('notifExcluirTodasModal');
+      if (modal) modal.remove();
+    }
+
+    async function confirmarExclusaoTodasEnviadas() {
+      const btn = document.getElementById('notifExcluirTodasBtn');
+      if (!btn || btn.disabled) return;
+      btn.disabled = true;
+      btn.classList.remove('is-ready');
+      btn.textContent = 'A excluir...';
+
+      const db = window.__movicelDb;
+      const fs = window.__movicelFirestore;
+      if (!db || !fs) {
+        showToast('Sem ligação ao servidor.');
+        closeNotifExcluirTodasModal();
+        return;
+      }
+
+      try {
+        const batch = fs.writeBatch(db);
+        _notifEnviadasCache.forEach(n => batch.delete(fs.doc(db, 'notificacoesAdmin', n.id)));
+        await batch.commit();
+
+        closeNotifExcluirTodasModal();
+        showToast('Notificações enviadas excluídas.');
+        renderNotificacoesEnviadas();
+      } catch (err) {
+        console.error('Erro ao excluir notificações enviadas:', err);
+        showToast('Erro ao excluir as notificações.');
+        closeNotifExcluirTodasModal();
+      }
     }
     document.getElementById('btnNotificacoes').addEventListener('click', renderNotificacoesPage);
     atualizarBadgeNotificacoes();
@@ -3875,7 +4130,7 @@
         if (e.target === overlay) closeUtilExcluirContaModal();
       });
 
-      iniciarContagemBotaoExcluir('utilDeleteConfirmBtn');
+      _excluirContaTimer = iniciarContagemBotaoExcluir('utilDeleteConfirmBtn', 'Eliminar conta');
     }
 
     function closeUtilExcluirContaModal() {
@@ -3884,23 +4139,23 @@
       if (modal) modal.remove();
     }
 
-    function iniciarContagemBotaoExcluir(btnId) {
+    function iniciarContagemBotaoExcluir(btnId, textoFinal) {
       let segundos = 5;
       const btn = document.getElementById(btnId);
-      if (!btn) return;
+      if (!btn) return null;
       const countSpan = btn.querySelector('.udc-count');
-      _excluirContaTimer = setInterval(() => {
+      const timerId = setInterval(() => {
         segundos--;
         if (segundos <= 0) {
-          clearInterval(_excluirContaTimer);
-          _excluirContaTimer = null;
+          clearInterval(timerId);
           btn.disabled = false;
           btn.classList.add('is-ready');
-          btn.textContent = 'Eliminar conta';
+          btn.textContent = textoFinal || 'Eliminar';
         } else if (countSpan) {
           countSpan.textContent = segundos;
         }
       }, 1000);
+      return timerId;
     }
 
     async function confirmarExclusaoConta(uid) {
@@ -3960,7 +4215,7 @@
         if (e.target === overlay) closeMinhaContaExcluirModal();
       });
 
-      iniciarContagemBotaoExcluir('minhaContaDeleteBtn');
+      _excluirContaTimer = iniciarContagemBotaoExcluir('minhaContaDeleteBtn', 'Eliminar conta');
     }
 
     function closeMinhaContaExcluirModal() {
