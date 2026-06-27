@@ -13,7 +13,7 @@
       overflow-x:hidden;
       max-width:100%;
     }
-    body { 
+    body {
       min-height:100vh; display:flex; flex-direction:column; transition: background 0.3s;
       width:100%;
     }
@@ -189,11 +189,11 @@
       flex:1 1 auto; width:100vw; padding-bottom:92px;
       min-height:0;
     }
-    
+
     .rec-page { width:90vw; max-width:420px; margin:0 auto; padding:78px 0 90px 0; box-sizing:border-box; animation: fadeIn .3s; }
     .rec-page.ad-mode { width:100vw; max-width:100vw; padding:0 0 90px 0; }
     .subheader.ad-mode { min-height:0 !important; margin:0 !important; padding:0 !important; font-size:0 !important; }
-    
+
     #rec-ad-block { width:100%; overflow:hidden; position:relative; user-select:none; padding-top:64px; }
     #rec-ad-swipe-track { display:flex; transition:transform 0.35s cubic-bezier(.45,.15,.5,1.1); will-change:transform; }
     #rec-ad-swipe-track img { width:100vw; flex-shrink:0; display:block; border-radius:0; object-fit:cover; max-height:260px; }
@@ -439,7 +439,7 @@
   justify-content: space-around;
   align-items: stretch;
   z-index: 11;
-  transition: none; 
+  transition: none;
   padding-bottom: env(safe-area-inset-bottom, 0);
   box-sizing: border-box;
 }
@@ -476,7 +476,7 @@
 }
 .fab-footer-btn {
   position: fixed;
-  bottom: 70px; 
+  bottom: 70px;
   right: 20px;
   z-index: 20;
   width: 45px;
@@ -683,7 +683,7 @@
 .carousel-track {
   display: flex;
   transition: transform 0.4s cubic-bezier(.45,.15,.5,1.1);
-  width: 200%; 
+  width: 200%;
 }
 .carousel-slide {
   width: 95vw;
@@ -744,12 +744,12 @@
       transform: scale(1);
     }
   }
-  
+
   .settings-page {
     width:90vw; max-width:390px;
     margin:0 auto;
     box-sizing:border-box;
-    padding-top:78px; 
+    padding-top:78px;
     min-height: calc(100vh - 180px);
     display:flex;
     flex-direction:column;
@@ -845,7 +845,7 @@
   .settings-list-text strong { color:#c20021; font-size:0.98em; font-weight:700; }
   .settings-list-text span { color:#999; font-size:0.80em; }
   .settings-list-chevron { color:#c20021; font-size:1.3em; opacity:.55; flex-shrink:0; }
-  
+
   .settings-modal-overlay {
     display:none;
     position:fixed; top:0; left:0; right:0; bottom:0;
@@ -1004,7 +1004,7 @@
     font-weight:700;
     color:#c20021;
   }
-  
+
   .rec-quick-section-label {
     font-size:0.72em; font-weight:800; color:#aaa; text-transform:uppercase;
     letter-spacing:.06em; padding:14px 16px 8px 16px;
@@ -1072,7 +1072,7 @@
     padding:3px 8px; margin-top:2px; white-space:nowrap;
   }
   .rec-quick-val-pay b { font-weight:800; }
-  
+
   .rec-valor-selected-banner {
     display:flex; align-items:center; gap:10px;
     background:linear-gradient(135deg,#e0102f 0%,#a4001c 100%);
@@ -1092,7 +1092,7 @@
     white-space:nowrap; flex-shrink:0;
   }
   .rec-valor-selected-banner .rvs-change:active { background:rgba(255,255,255,0.35); }
-  
+
   .rec-ad-divider {
     display:flex; align-items:center; gap:10px;
     padding:0 16px 10px 16px; color:#ccc; font-size:0.70em; font-weight:700;
@@ -1175,7 +1175,7 @@
   .hist-empty span { font-size:0.85em; }
   .hist-empty-filtered { padding:34px 20px; }
 
-  /* ── Tela Admin: Preços ── */
+
   .precos-admin-wrap { padding:14px 14px 90px 14px; display:flex; flex-direction:column; gap:18px; }
   .precos-admin-section {
     background:#fff; border-radius:14px; padding:14px 14px 12px 14px;
@@ -1216,7 +1216,7 @@
     background:#fff; box-shadow:0 -2px 10px rgba(0,0,0,0.08); z-index:50;
   }
 
-  /* ── Tela Admin: Utilizadores ── */
+
   .util-card { cursor:pointer; transition:background .15s; }
   .util-card:active { background:#fbe9ea; }
   .util-tipo-badge {
@@ -1627,7 +1627,7 @@
     const saveHistory = (item) => {
       _historyCache.unshift(item);
     };
-  
+
     let _contactsCache = [];
     const getContacts = () => _contactsCache;
     const addContact = (name, number) => {
@@ -1814,9 +1814,9 @@
       atualizarBadgeNotificacoes();
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // ADMIN: Ver e excluir notificações enviadas (Firestore)
-    // ══════════════════════════════════════════════════════════════════
+
+
+
     let _notifEnviadasCache = [];
 
     async function renderNotificacoesEnviadas() {
@@ -2394,8 +2394,8 @@
       aguardarTipoEDecidirBotao();
     }
 
-    // ── Config de preços (editável pelo admin via Firestore: config/precos) ──
-    // Valores padrão (usados até a config remota chegar, ou se o documento ainda não existir)
+
+
     const PRECOS_DEFAULT = {
       valoresRapidosHome: [200, 500, 900, 1000, 1500, 2000],
       valoresTela2: [200, 500, 1000, 2000],
@@ -2403,9 +2403,9 @@
       bonusRecargaPorValor: { 900: '+10 GB' },
       faixasDesconto: {
         vendedor: [
-          { min: 1000, exclusivo: true, pct: 0.10 },  // v > 1000
-          { min: 600, pct: 0.15 },                    // v >= 600
-          { min: 200, pct: 0.20 }                      // v >= 200
+          { min: 1000, exclusivo: true, pct: 0.10 },
+          { min: 600, pct: 0.15 },
+          { min: 200, pct: 0.20 }
         ],
         cliente: [
           { min: 1000, pct: 0.10 },
@@ -2421,7 +2421,7 @@
       return JSON.parse(JSON.stringify(PRECOS_DEFAULT));
     }
 
-    // Chamado pelo listener onSnapshot quando config/precos muda no Firestore
+
     window.__movicelAplicarPrecosRemotos = function(data) {
       const base = clonePrecosDefault();
       _precosState = {
@@ -2432,7 +2432,7 @@
         faixasDesconto: (data.faixasDesconto && typeof data.faixasDesconto === 'object') ? data.faixasDesconto : base.faixasDesconto
       };
       window.__movicelPrecosCarregados = true;
-      // Atualiza telas já abertas que dependam dos valores de preço
+
       if (typeof atualizarQuickValuesCards === 'function') atualizarQuickValuesCards();
       if (typeof window.__movicelOnPrecosChanged === 'function') window.__movicelOnPrecosChanged();
     };
@@ -2464,7 +2464,7 @@
       return { valor: v, desconto, preco };
     }
 
-    // Mantido por compatibilidade: acesso direto ao mapa de bónus
+
     Object.defineProperty(window, 'bonusRecargaPorValor', {
       get() { return _precosState.bonusRecargaPorValor; }
     });
@@ -3497,7 +3497,7 @@
     }
     function useContactForRecarga(number) { temp.numero=number; renderTela1(); mostrarFormRecarga(); }
 
-    
+
     document.getElementById('nav-home').addEventListener('click', renderTela1);
     document.getElementById('nav-history').addEventListener('click', renderHistory);
     document.getElementById('nav-contacts').addEventListener('click', renderContacts);
@@ -3814,9 +3814,9 @@
       root.innerHTML = html;
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // ADMIN: Utilizadores cadastrados (perfisUtilizador no Firestore)
-    // ══════════════════════════════════════════════════════════════════
+
+
+
 
     let _utilizadoresAllCache = [];
     let _utilizadoresCache = [];
@@ -4066,9 +4066,9 @@
       }
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // Exclusão de dados de um utilizador no Firestore (reutilizável)
-    // ══════════════════════════════════════════════════════════════════
+
+
+
     async function excluirDadosUtilizadorFirestore(uid) {
       const db = window.__movicelDb;
       const fs = window.__movicelFirestore;
@@ -4076,27 +4076,27 @@
 
       const batch = fs.writeBatch(db);
 
-      // Perfil do utilizador
+
       batch.delete(fs.doc(db, 'perfisUtilizador', uid));
 
-      // Pedidos de recarga associados
+
       const pedidosSnap = await fs.getDocs(fs.query(fs.collection(db, 'pedidosRecarga'), fs.where('uid', '==', uid)));
       pedidosSnap.forEach(d => batch.delete(d.ref));
 
-      // Contactos salvos associados
+
       const contactosSnap = await fs.getDocs(fs.query(fs.collection(db, 'contactosSalvos'), fs.where('uid', '==', uid)));
       contactosSnap.forEach(d => batch.delete(d.ref));
 
-      // Cartões físicos associados
+
       const cartoesSnap = await fs.getDocs(fs.query(fs.collection(db, 'cartoesFisicos'), fs.where('uid', '==', uid)));
       cartoesSnap.forEach(d => batch.delete(d.ref));
 
       await batch.commit();
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // ADMIN: Excluir conta de utilizador por completo (Firestore)
-    // ══════════════════════════════════════════════════════════════════
+
+
+
     let _excluirContaTimer = null;
 
     function abrirModalExcluirConta(uid, nome) {
@@ -4177,9 +4177,9 @@
       }
     }
 
-    // ══════════════════════════════════════════════════════════════════
-    // UTILIZADOR: Excluir a própria conta (Configurações)
-    // ══════════════════════════════════════════════════════════════════
+
+
+
     function abrirModalExcluirMinhaConta() {
       const user = window.__currentUser;
       if (!user || !user.uid) { showToast('Sessão inválida.'); return; }
@@ -4255,10 +4255,10 @@
     }
 
 
-    // ADMIN: Gestão de Preços (config/precos no Firestore)
-    // ══════════════════════════════════════════════════════════════════
 
-    let _precosEdit = null; // cópia de trabalho enquanto o admin edita
+
+
+    let _precosEdit = null;
 
     function renderPrecosAdmin() {
       detachPedidosListener();
@@ -4277,7 +4277,7 @@
 
       _precosEdit = JSON.parse(JSON.stringify(getPrecosState()));
       window.__movicelOnPrecosChanged = () => {
-        // Se a config remota mudar enquanto o admin está fora da tela de edição, não fazemos nada aqui.
+
       };
 
       document.getElementById('content').innerHTML = `
@@ -4353,7 +4353,7 @@
         root.innerHTML = `<div class="precos-empty-row">Nenhum valor adicionado.</div>`;
         return;
       }
-      // Mantém sempre a ordem crescente de preços nos cards
+
       lista.sort((a, b) => Number(a) - Number(b));
       root.innerHTML = lista.map((v, idx) => `
         <div class="precos-row">
@@ -4492,7 +4492,7 @@
         return;
       }
 
-      // Ordena as faixas da maior para a menor (para a lógica de "primeira faixa atingida" funcionar)
+
       ['cliente', 'vendedor'].forEach(tipo => {
         if (_precosEdit.faixasDesconto && Array.isArray(_precosEdit.faixasDesconto[tipo])) {
           _precosEdit.faixasDesconto[tipo].sort((a, b) => Number(b.min) - Number(a.min));
@@ -4957,7 +4957,7 @@ let currentSlide = 0;
 function moveCarousel(dir) {
   const slides = document.querySelectorAll('.carousel-slide');
   currentSlide = (currentSlide + dir + slides.length) % slides.length;
-  document.querySelector('.carousel-track').style.transform = 
+  document.querySelector('.carousel-track').style.transform =
     `translateX(-${currentSlide * 100}%)`;
 }
 
@@ -5164,7 +5164,7 @@ function toggleAddContactForm() {
     window.__movicelDb = fsDb;
     window.__movicelFirestore = { collection, addDoc, deleteDoc, updateDoc, doc, setDoc, query, where, onSnapshot, getDocs, serverTimestamp, writeBatch };
 
-    // Sincronização em tempo real da config de preços (config/precos)
+
     try {
       const precosRef = doc(fsDb, 'config', 'precos');
       onSnapshot(precosRef, (snap) => {
@@ -5593,10 +5593,10 @@ function toggleAddContactForm() {
       if (typeof window.attachContactsSync === 'function') window.attachContactsSync();
       if (typeof window.attachProfileSync === 'function') window.attachProfileSync();
       if (typeof window.attachNotifSync === 'function') window.attachNotifSync();
-      // Mostra o botão de Preços apenas para administradores
+
       const btnPrecos = document.getElementById('btnPrecosAdmin');
       if (btnPrecos) btnPrecos.style.display = (typeof isAdminUser === 'function' && isAdminUser()) ? '' : 'none';
-      // Mostra o botão de Utilizadores apenas para administradores
+
       const btnUtilizadores = document.getElementById('btnUtilizadoresAdmin');
       if (btnUtilizadores) btnUtilizadores.style.display = (typeof isAdminUser === 'function' && isAdminUser()) ? '' : 'none';
       if (!user.displayName || !user.displayName.trim()) {
